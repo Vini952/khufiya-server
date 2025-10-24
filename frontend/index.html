@@ -7,8 +7,8 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #1f1c2c, #928dab);
-      color: white;
+      background-color: #000;
+      color: #39ff14;
       text-align: center;
       padding: 40px;
     }
@@ -18,11 +18,18 @@
       font-size: 16px;
       border-radius: 5px;
       border: none;
+      background-color: #111;
+      color: #39ff14;
+      box-shadow: 0 0 5px #39ff14;
+    }
+    button:hover {
+      background-color: #222;
+      cursor: pointer;
     }
     .loader {
       margin: 40px auto;
-      border: 8px solid #f3f3f3;
-      border-top: 8px solid #ffcc00;
+      border: 8px solid #222;
+      border-top: 8px solid #39ff14;
       border-radius: 50%;
       width: 60px;
       height: 60px;
@@ -39,10 +46,33 @@
       from { opacity: 0; transform: scale(0.9); }
       to { opacity: 1; transform: scale(1); }
     }
+    .joueur-card {
+      background-color: #111;
+      border: 1px solid #39ff14;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 6px auto;
+      width: fit-content;
+      box-shadow: 0 0 10px #39ff14;
+      font-weight: bold;
+    }
+    #consoleDebug {
+      background-color: #111;
+      border: 1px solid #39ff14;
+      padding: 10px;
+      margin-top: 30px;
+      font-family: monospace;
+      color: #39ff14;
+      box-shadow: 0 0 10px #39ff14;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
-  <h1>🕵️‍♂️ Khufiya</h1>
+  <h1 style="font-size:48px; margin-bottom:20px;">
+    <span style="color:#39ff14;">🕵️‍♂️</span>
+    <span style="text-shadow: 0 0 10px #39ff14;">Khufiya</span>
+  </h1>
 
   <div id="formCreateur">
     <p>Ton prénom :</p>
@@ -70,7 +100,7 @@
     <p>La partie commencera automatiquement.</p>
     <div id="listeJoueurs" style="margin-top:20px;">
       <h3>Joueurs connectés :</h3>
-      <ul id="joueursConnectes" style="list-style:none; padding:0;"></ul>
+      <div id="joueursConnectes"></div>
     </div>
   </div>
 
@@ -80,7 +110,7 @@
     <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
 
-  <div id="consoleDebug" style="background:#222; color:#0f0; padding:10px; margin-top:30px; font-family:monospace; text-align:left;">
+  <div id="consoleDebug">
     <h3>🛠️ Console de debug :</h3>
     <div id="logConsole"></div>
   </div>
@@ -166,12 +196,13 @@
 
     socket.on('miseAJourJoueurs', (liste) => {
       log("Joueurs connectés : " + liste.join(", "));
-      const ul = document.getElementById('joueursConnectes');
-      ul.innerHTML = '';
+      const container = document.getElementById('joueursConnectes');
+      container.innerHTML = '';
       liste.forEach(nom => {
-        const li = document.createElement('li');
-        li.innerText = nom;
-        ul.appendChild(li);
+        const card = document.createElement('div');
+        card.className = 'joueur-card';
+        card.innerText = nom;
+        container.appendChild(card);
       });
     });
   </script>
