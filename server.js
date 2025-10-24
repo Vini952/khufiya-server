@@ -3,9 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const motsHindi = require('./motsHindi');
-const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
-socket.emit('motDistribue', mot); // mot.hindi et mot.english
+const motsHindi = require('./motsHindi'); // ✅ Import des mots
 
 const app = express();
 app.use(cors());
@@ -24,22 +22,9 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-// Liste de mots Hindi avec traduction
-const motsHindi = [
-  { hindi: "सेब", english: "Apple" },
-  { hindi: "केला", english: "Banana" },
-  { hindi: "भारत", english: "India" },
-  { hindi: "कुर्सी", english: "Chair" },
-  { hindi: "पंखा", english: "Fan" },
-  { hindi: "नारियल", english: "Coconut" },
-  { hindi: "अमरूद", english: "Guava" },
-  { hindi: "जापान", english: "Japan" },
-  { hindi: "दरवाज़ा", english: "Door" },
-  { hindi: "घड़ी", english: "Watch" },
-  // Ajoute-en autant que tu veux ici...
-];
+// Stocker les salles et leurs joueurs
+const rooms = {};
 
-// Logique de jeu
 io.on('connection', (socket) => {
   console.log("Un joueur connecté :", socket.id);
 
@@ -47,29 +32,34 @@ io.on('connection', (socket) => {
     socket.emit('pong', 'Serveur Khufiya actif !');
   });
 
-  socket.on('creerSalle', ({ joueurs }) => {
-    console.log("Salle créée avec :", joueurs);
+  // Création de salle
+  socket.on('creerSalle', ({ joueurs, roomId }) => {
+    console.log(`Salle ${roomId} créée avec :`, joueurs);
+
+    rooms[roomId] = joueurs;
 
     // Choisir un mot aléatoire
     const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
 
-    // Choisir un joueur mystère au hasard
+    // Choisir un joueur mystère
     const indexMystere = Math.floor(Math.random() * joueurs.length);
     const joueurMystere = joueurs[indexMystere];
 
-    // Envoyer le mot à tous sauf le joueur mystère
+    // Distribuer le mot à tous sauf au mystère
     joueurs.forEach((nom, i) => {
       const idSocket = Object.values(io.sockets.sockets)[i]?.id;
       if (!idSocket) return;
 
       if (nom === joueurMystere) {
-        io.to(idSocket).emit('tuEsLeMystere', { message: "Tu es le joueur mystère !" });
+        io.to(idSocket).emit('tuEsLeMystere', {
+          message: "Tu es le Khufiya ! Ne révèle rien.",
+        });
       } else {
-        io.to(idSocket).emit('motDistribue', mot);
+        io.to(idSocket).emit('motDistribue', mot); // mot.hindi et mot.english
       }
     });
 
-    console.log(`Mot choisi : ${mot.hindi} (${mot.english}) — Mystère : ${joueurMystere}`);
+    console.log(`Mot : ${mot.hindi} (${mot.english}) — Mystère : ${joueurMystere}`);
   });
 });
 
@@ -78,3 +68,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Serveur Khufiya lancé sur le port ${PORT}`);
 });
+
