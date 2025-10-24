@@ -23,6 +23,7 @@ const rooms = {}; // { roomId: { max, joueurs: [{ id, nom }], mot, mystere } }
 io.on('connection', (socket) => {
   console.log("🟢 Connecté :", socket.id);
 
+  // Création de salle par le créateur
   socket.on('creerSalle', ({ roomId, max, nomCreateur }) => {
     if (rooms[roomId]) {
       socket.emit('erreur', "Cette salle existe déjà.");
@@ -38,8 +39,12 @@ io.on('connection', (socket) => {
 
     socket.join(roomId);
     console.log(`🛠️ Salle ${roomId} créée pour ${max} joueurs`);
+
+    // Mise à jour de la liste
+    io.to(roomId).emit('miseAJourJoueurs', rooms[roomId].joueurs.map(j => j.nom));
   });
 
+  // Rejoindre une salle en tant qu'invité
   socket.on('rejoindreSalle', ({ roomId, nom }) => {
     const salle = rooms[roomId];
     if (!salle) {
@@ -56,6 +61,10 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`👤 ${nom} a rejoint la salle ${roomId}`);
 
+    // Mise à jour de la liste
+    io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
+
+    // Démarrage automatique
     if (salle.joueurs.length === salle.max) {
       const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
       const indexMystere = Math.floor(Math.random() * salle.joueurs.length);
@@ -78,11 +87,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Déconnexion
   socket.on('disconnect', () => {
     console.log("🔴 Déconnecté :", socket.id);
     for (const roomId in rooms) {
       const salle = rooms[roomId];
+      const avant = salle.joueurs.length;
       salle.joueurs = salle.joueurs.filter(j => j.id !== socket.id);
+      const apres = salle.joueurs.length;
+
+      if (avant !== apres) {
+        io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
+      }
     }
   });
 });
