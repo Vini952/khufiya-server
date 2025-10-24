@@ -1,22 +1,27 @@
-// Importation des modules nécessaires
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const path = require('path');
 
-// Initialisation de l'application
 const app = express();
 app.use(cors());
 
-// Création du serveur HTTP
+// Servir les fichiers statiques du dossier frontend
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Route principale pour servir index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
+
 const server = http.createServer(app);
 
-// Initialisation de Socket.IO
 const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-// Logique de jeu (exemple simplifié)
+// Logique de jeu
 io.on('connection', (socket) => {
   console.log("Un joueur connecté :", socket.id);
 
@@ -25,7 +30,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Lancement du serveur
-server.listen(3000, () => {
-  console.log("Serveur Khufiya lancé sur le port 3000");
+// Utiliser le port Railway ou 3000 en local
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Serveur Khufiya lancé sur le port ${PORT}`);
 });
