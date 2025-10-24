@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const motsHindi = require('./motsHindi');
+const motsHindi = require('./motsHindi'); // Assure-toi que ce fichier existe
 
 const app = express();
 app.use(cors());
@@ -21,10 +21,9 @@ const io = new Server(server, {
 const rooms = {};
 
 io.on('connection', (socket) => {
-  console.log("🟢 Nouveau joueur connecté :", socket.id);
+  console.log("🟢 Connecté :", socket.id);
 
   socket.on('creerSalle', ({ roomId, max, nomCreateur }) => {
-    console.log(`🛠️ Création de la salle ${roomId} pour ${max} joueurs`);
     rooms[roomId] = {
       max,
       joueurs: [{ id: socket.id, nom: nomCreateur }],
@@ -32,19 +31,18 @@ io.on('connection', (socket) => {
       mystere: null
     };
     socket.join(roomId);
+    console.log(`🛠️ Salle ${roomId} créée par ${nomCreateur} pour ${max} joueurs`);
     io.to(roomId).emit('miseAJourJoueurs', rooms[roomId].joueurs.map(j => j.nom));
   });
 
   socket.on('rejoindreSalle', ({ roomId, nom }) => {
     const salle = rooms[roomId];
     if (!salle) {
-      console.log(`❌ Salle ${roomId} introuvable`);
       socket.emit('erreur', "Salle introuvable.");
       return;
     }
 
     if (salle.joueurs.length >= salle.max) {
-      console.log(`❌ Salle ${roomId} est pleine`);
       socket.emit('erreur', "La salle est complète.");
       return;
     }
@@ -53,9 +51,10 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`👤 ${nom} a rejoint la salle ${roomId}`);
     io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
+    console.log(`👥 Salle ${roomId} contient ${salle.joueurs.length}/${salle.max} joueurs`);
 
     if (salle.joueurs.length === salle.max) {
-      console.log(`✅ Tous les joueurs sont là pour ${roomId}. Démarrage...`);
+      console.log(`✅ Tous les joueurs sont là. Démarrage de la partie...`);
       const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
       const indexMystere = Math.floor(Math.random() * salle.joueurs.length);
       const mystereId = salle.joueurs[indexMystere].id;
@@ -65,13 +64,13 @@ io.on('connection', (socket) => {
 
       salle.joueurs.forEach(joueur => {
         if (joueur.id === mystereId) {
-          console.log(`🕵️‍♂️ ${joueur.nom} est le Khufiya`);
           io.to(joueur.id).emit('tuEsLeMystere', {
             message: "Tu es le Khufiya ! Ne révèle rien."
           });
+          console.log(`🕵️‍♂️ ${joueur.nom} est le Khufiya`);
         } else {
-          console.log(`📨 ${joueur.nom} reçoit le mot : ${mot.hindi} (${mot.english})`);
           io.to(joueur.id).emit('motDistribue', mot);
+          console.log(`📨 ${joueur.nom} reçoit le mot : ${mot.hindi} (${mot.english})`);
         }
       });
     }
@@ -85,7 +84,6 @@ io.on('connection', (socket) => {
       salle.joueurs = salle.joueurs.filter(j => j.id !== socket.id);
       const apres = salle.joueurs.length;
       if (avant !== apres) {
-        console.log(`🔄 Mise à jour de la salle ${roomId} après déconnexion`);
         io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
       }
     }
