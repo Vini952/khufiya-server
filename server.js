@@ -3,6 +3,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const motsHindi = require('./motsHindi');
+const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
+socket.emit('motDistribue', mot); // mot.hindi et mot.english
 
 const app = express();
 app.use(cors());
