@@ -86,7 +86,7 @@
   </div>
 
   <script>
-    const socket = io("https://khufiya-production.up.railway.app");
+    const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
     let monNom = "";
@@ -114,6 +114,7 @@
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
 
+      // Le créateur rejoint aussi la salle
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
 
       const lien = window.location.origin + "/?room=" + salleId;
