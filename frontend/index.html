@@ -78,8 +78,10 @@
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
     let monNom = "";
+    let salleId = "";
 
     if (roomId) {
+      salleId = roomId;
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('formInvite').style.display = 'block';
     }
@@ -90,10 +92,13 @@
       if (!nom || !count || count < 2) return alert("Remplis tous les champs");
 
       monNom = nom;
-      const id = "khufiya-" + Math.random().toString(36).substring(2, 6);
-      socket.emit('creerSalle', { roomId: id, max: count, nomCreateur: nom });
+      salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
+      socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
 
-      const lien = window.location.origin + "/?room=" + id;
+      // ✅ Le créateur rejoint aussi la salle
+      socket.emit('rejoindreSalle', { roomId: salleId, nom });
+
+      const lien = window.location.origin + "/?room=" + salleId;
       document.getElementById('roomLink').value = lien;
       document.getElementById('roomLinkContainer').style.display = 'block';
       document.getElementById('formCreateur').style.display = 'none';
@@ -104,7 +109,7 @@
       const nom = document.getElementById('prenomInvite').value.trim();
       if (!nom) return alert("Entre ton prénom");
       monNom = nom;
-      socket.emit('rejoindreSalle', { roomId, nom });
+      socket.emit('rejoindreSalle', { roomId: salleId, nom });
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
     }
@@ -135,7 +140,6 @@
       location.reload();
     });
 
-    // ✅ Mise à jour de la liste des joueurs
     socket.on('miseAJourJoueurs', (liste) => {
       const ul = document.getElementById('joueursConnectes');
       ul.innerHTML = '';
