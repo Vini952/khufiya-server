@@ -37,58 +37,61 @@
 <body>
   <h1>🕵️‍♂️ Khufiya</h1>
 
-  <!-- Créateur -->
   <div id="formCreateur">
+    <p>Ton prénom :</p>
+    <input type="text" id="nomCreateur" placeholder="Ex: Tailor">
     <p>Combien de joueurs ?</p>
     <input type="number" id="playerCount" min="2" max="20" placeholder="Ex: 5">
     <button onclick="creerSalle()">Créer la salle</button>
   </div>
 
-  <!-- Lien à partager -->
   <div id="roomLinkContainer" style="display:none;">
     <p>Lien d'invitation :</p>
     <input type="text" id="roomLink" readonly style="width:80%; font-size:16px;">
     <button onclick="copierLien()">Copier</button>
   </div>
 
-  <!-- Invité -->
   <div id="formInvite" style="display:none;">
     <p>Entre ton prénom pour rejoindre la partie :</p>
     <input type="text" id="prenomInvite" placeholder="Ton prénom">
     <button onclick="rejoindreSalle()">Rejoindre</button>
   </div>
 
-  <!-- Attente -->
   <div id="waitingScreen" style="display:none;">
     <h2>En attente des joueurs...</h2>
     <div class="loader"></div>
     <p>La partie commencera automatiquement.</p>
+    <div id="listeJoueurs" style="margin-top:20px;">
+      <h3>Joueurs connectés :</h3>
+      <ul id="joueursConnectes" style="list-style:none; padding:0;"></ul>
+    </div>
   </div>
 
-  <!-- Mot ou rôle -->
   <div id="motContainer" style="display:none; margin-top:30px;">
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
+    <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
 
   <script>
     const socket = io("https://khufiya-production.up.railway.app");
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
+    let monNom = "";
 
-    // Si invité
     if (roomId) {
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('formInvite').style.display = 'block';
     }
 
-    // Créateur : créer la salle
     function creerSalle() {
+      const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
-      if (!count || count < 2) return alert("Choisis au moins 2 joueurs");
+      if (!nom || !count || count < 2) return alert("Remplis tous les champs");
 
+      monNom = nom;
       const id = "khufiya-" + Math.random().toString(36).substring(2, 6);
-      socket.emit('creerSalle', { roomId: id, max: count });
+      socket.emit('creerSalle', { roomId: id, max: count, nomCreateur: nom });
 
       const lien = window.location.origin + "/?room=" + id;
       document.getElementById('roomLink').value = lien;
@@ -97,16 +100,15 @@
       document.getElementById('waitingScreen').style.display = 'block';
     }
 
-    // Invité : rejoindre la salle
     function rejoindreSalle() {
       const nom = document.getElementById('prenomInvite').value.trim();
       if (!nom) return alert("Entre ton prénom");
+      monNom = nom;
       socket.emit('rejoindreSalle', { roomId, nom });
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
     }
 
-    // Copier le lien
     function copierLien() {
       const input = document.getElementById('roomLink');
       input.select();
@@ -114,7 +116,6 @@
       alert("Lien copié !");
     }
 
-    // Réception du mot
     socket.on('motDistribue', (mot) => {
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('motContainer').style.display = 'block';
@@ -122,7 +123,6 @@
       document.getElementById('motDetail').innerText = mot.hindi + " (" + mot.english + ")";
     });
 
-    // Réception du rôle Khufiya
     socket.on('tuEsLeMystere', (data) => {
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('motContainer').style.display = 'block';
@@ -130,10 +130,20 @@
       document.getElementById('motDetail').innerText = "Observe les autres et devine le mot.";
     });
 
-    // Erreurs
     socket.on('erreur', (msg) => {
       alert(msg);
       location.reload();
+    });
+
+    // ✅ Mise à jour de la liste des joueurs
+    socket.on('miseAJourJoueurs', (liste) => {
+      const ul = document.getElementById('joueursConnectes');
+      ul.innerHTML = '';
+      liste.forEach(nom => {
+        const li = document.createElement('li');
+        li.innerText = nom;
+        ul.appendChild(li);
+      });
     });
   </script>
 </body>
