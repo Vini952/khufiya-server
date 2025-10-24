@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Undercover - Salle Secrète</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      background-color: #111;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+    #log {
+      margin-top: 20px;
+      font-size: 18px;
+      white-space: pre-wrap;
+    }
+    .hidden {
+      display: none;
+    }
+    .pulse {
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="pulse">🕵️‍♂️ UNDERCOVER - MODE SUSPENSE</h1>
+
+  <div id="join">
+    <input type="text" id="playerName" placeholder="Ton nom">
+    <input type="text" id="roomCode" placeholder="Code de la salle">
+    <button onclick="joinRoom()">Rejoindre</button>
+    <button onclick="createRoom()">Créer une salle</button>
+  </div>
+
+  <div id="game" class="hidden">
+    <h2 id="status">En attente des joueurs...</h2>
+    <button onclick="startGame()">Démarrer la partie</button>
+    <div id="wordSection" class="hidden">
+      <h3>Ton mot secret :</h3>
+      <p id="yourWord" style="font-size: 24px;"></p>
+    </div>
+    <div id="voteSection" class="hidden">
+      <h3>Vote pour éliminer :</h3>
+      <div id="voteButtons"></div>
+    </div>
+    <div id="log"></div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script>
+    const socket = io("http://localhost:3000"); // Remplace par ton URL si hébergé
+    let playerName = "";
+    let roomCode = "";
+
+    function createRoom() {
+      roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+      socket.emit("createRoom", roomCode);
+      document.getElementById("status").textContent = "Salle créée : " + roomCode;
+      document.getElementById("join").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+    }
+
+    function joinRoom() {
+      playerName = document.getElementById("playerName").value.trim();
+      roomCode = document.getElementById("roomCode").value.trim().toUpperCase();
+      if (!playerName || !roomCode) return alert("Nom et code requis !");
+      socket.emit("joinRoom", { code: roomCode, name: playerName });
+      document.getElementById("join").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+      document.getElementById("status").textContent = "Salle : " + roomCode;
+    }
+
+    function startGame() {
+      socket.emit("startGame", roomCode);
+      document.getElementById("status").textContent = "Distribution des mots...";
+    }
+
+    socket.on("yourWord", (word) => {
+      document.getElementById("wordSection").classList.remove("hidden");
+      document.getElementById("yourWord").textContent = word;
+    });
+
+    socket.on("playerList", (players) => {
+      document.getElementById("log").textContent = "Joueurs connectés :\n" + players.map(p => p.name).join("\n");
+      document.getElementById("voteButtons").innerHTML = "";
+      players.forEach(p => {
+        const btn = document.createElement("button");
+        btn.textContent = p.name;
+        btn.onclick = () => socket.emit("vote", { code: roomCode, votedId: p.id });
+        document.getElementById("voteButtons").appendChild(btn);
+      });
+      document.getElementById("voteSection").classList.remove("hidden");
+    });
+
+    socket.on("eliminated", (id) => {
+      document.getElementById("status").textContent = "Joueur éliminé : " + id;
+    });
+
+    socket.on("roomCreated", (code) => {
+      console.log("Salle créée :", code);
+    });
+  </script>
+</body>
+</html>
