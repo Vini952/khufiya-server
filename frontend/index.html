@@ -56,16 +56,6 @@
       box-shadow: 0 0 10px #39ff14;
       font-weight: bold;
     }
-    #consoleDebug {
-      background-color: #111;
-      border: 1px solid #39ff14;
-      padding: 10px;
-      margin-top: 30px;
-      font-family: monospace;
-      color: #39ff14;
-      box-shadow: 0 0 10px #39ff14;
-      text-align: left;
-    }
   </style>
 </head>
 <body>
@@ -110,24 +100,12 @@
     <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
 
-  <div id="consoleDebug">
-    <h3>🛠️ Console de debug :</h3>
-    <div id="logConsole"></div>
-  </div>
-
   <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
     let monNom = "";
     let salleId = "";
-
-    function log(msg) {
-      const logDiv = document.getElementById('logConsole');
-      const line = document.createElement('div');
-      line.innerText = msg;
-      logDiv.appendChild(line);
-    }
 
     if (roomId) {
       salleId = roomId;
@@ -149,7 +127,6 @@
       document.getElementById('roomLinkContainer').style.display = 'block';
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-      log("Salle créée : " + salleId + " | Joueurs attendus : " + count);
     }
 
     function rejoindreSalle() {
@@ -159,7 +136,6 @@
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-      log("Rejoint la salle : " + salleId + " en tant que " + nom);
     }
 
     function copierLien() {
@@ -179,23 +155,19 @@
     }
 
     socket.on('motDistribue', (mot) => {
-      log("Mot reçu : " + mot.hindi + " (" + mot.english + ")");
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
     });
 
     socket.on('tuEsLeMystere', (data) => {
-      log("Tu es le Khufiya !");
       afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
     });
 
     socket.on('erreur', (msg) => {
-      log("Erreur : " + msg);
       alert(msg);
       location.reload();
     });
 
     socket.on('miseAJourJoueurs', (liste) => {
-      log("Joueurs connectés : " + liste.join(", "));
       const container = document.getElementById('joueursConnectes');
       container.innerHTML = '';
       liste.forEach(nom => {
