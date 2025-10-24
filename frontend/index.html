@@ -48,7 +48,7 @@
     <p>Ton prénom :</p>
     <input type="text" id="nomCreateur" placeholder="Ex: Tailor">
     <p>Combien de joueurs ?</p>
-    <input type="number" id="playerCount" min="2" max="20" placeholder="Ex: 5">
+    <input type="number" id="playerCount" min="1" max="20" placeholder="Ex: 3">
     <button onclick="creerSalle()">Créer la salle</button>
   </div>
 
@@ -108,14 +108,11 @@
     function creerSalle() {
       const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
-      if (!nom || !count || count < 2) return alert("Remplis tous les champs");
+      if (!nom || !count || count < 1) return alert("Remplis tous les champs");
 
       monNom = nom;
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
-
-      // Le créateur rejoint aussi la salle
-      socket.emit('rejoindreSalle', { roomId: salleId, nom });
 
       const lien = window.location.origin + "/?room=" + salleId;
       document.getElementById('roomLink').value = lien;
