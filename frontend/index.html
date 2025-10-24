@@ -47,14 +47,27 @@
 
   <button onclick="startGame()" style="display:none;" id="startBtn">Créer la salle</button>
 
+  <div id="roomLinkContainer" style="display:none;">
+    <p>Lien de la salle :</p>
+    <input type="text" id="roomLink" readonly style="width:80%; font-size:16px;">
+    <button onclick="copierLien()">Copier</button>
+  </div>
+
   <div id="waitingScreen" style="display:none;">
     <h2>En attente des joueurs...</h2>
     <div class="loader"></div>
     <p>Prépare-toi à deviner !</p>
   </div>
 
+  <div id="motContainer" style="display:none; margin-top:30px;">
+    <h2 id="motMessage"></h2>
+    <p id="motDetail"></p>
+  </div>
+
   <script>
     const socket = io("https://khufiya-production.up.railway.app");
+
+    let roomId = "";
 
     function generateFields() {
       const count = parseInt(document.getElementById('playerCount').value);
@@ -84,14 +97,45 @@
         return;
       }
 
-      // Envoie les noms au serveur
-      socket.emit('creerSalle', { joueurs: noms });
+      // Générer un ID de salle
+      roomId = "khufiya-" + Math.random().toString(36).substring(2, 6);
 
-      // Affiche l'écran d'attente
+      // Envoie au serveur
+      socket.emit('creerSalle', { joueurs: noms, roomId });
+
+      // Affiche le lien à partager
+      const lien = window.location.origin + "/?room=" + roomId;
+      document.getElementById('roomLink').value = lien;
+      document.getElementById('roomLinkContainer').style.display = 'block';
+
+      // Affiche l’écran d’attente
       document.getElementById('playerInputs').style.display = 'none';
       document.getElementById('startBtn').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
     }
+
+    function copierLien() {
+      const input = document.getElementById('roomLink');
+      input.select();
+      document.execCommand('copy');
+      alert("Lien copié !");
+    }
+
+    // Réception du mot distribué
+    socket.on('motDistribue', (mot) => {
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('motContainer').style.display = 'block';
+      document.getElementById('motMessage').innerText = "Mot à deviner :";
+      document.getElementById('motDetail').innerText = mot.hindi + " (" + mot.english + ")";
+    });
+
+    // Réception du message pour le Khufiya
+    socket.on('tuEsLeMystere', (data) => {
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('motContainer').style.display = 'block';
+      document.getElementById('motMessage').innerText = data.message;
+      document.getElementById('motDetail').innerText = "Observe les autres et devine le mot.";
+    });
   </script>
 </body>
 </html>
