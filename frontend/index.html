@@ -32,6 +32,13 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .start-animation {
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -67,7 +74,7 @@
     </div>
   </div>
 
-  <div id="motContainer" style="display:none; margin-top:30px;">
+  <div id="motContainer" style="display:none; margin-top:30px;" class="start-animation">
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
     <button onclick="location.reload()">🔁 Rejouer</button>
@@ -95,7 +102,6 @@
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
 
-      // ✅ Le créateur rejoint aussi la salle
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
 
       const lien = window.location.origin + "/?room=" + salleId;
@@ -121,18 +127,21 @@
       alert("Lien copié !");
     }
 
-    socket.on('motDistribue', (mot) => {
+    function afficherDebutPartie(message, detail) {
       document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('motContainer').style.display = 'block';
-      document.getElementById('motMessage').innerText = "Mot à deviner :";
-      document.getElementById('motDetail').innerText = mot.hindi + " (" + mot.english + ")";
+      const container = document.getElementById('motContainer');
+      container.classList.add('start-animation');
+      container.style.display = 'block';
+      document.getElementById('motMessage').innerText = message;
+      document.getElementById('motDetail').innerText = detail;
+    }
+
+    socket.on('motDistribue', (mot) => {
+      afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
     });
 
     socket.on('tuEsLeMystere', (data) => {
-      document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('motContainer').style.display = 'block';
-      document.getElementById('motMessage').innerText = data.message;
-      document.getElementById('motDetail').innerText = "Observe les autres et devine le mot.";
+      afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
     });
 
     socket.on('erreur', (msg) => {
