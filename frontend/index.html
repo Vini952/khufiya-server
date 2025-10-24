@@ -2,118 +2,96 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Undercover - Salle Secrète</title>
+  <title>Khufiya - Création de partie</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
     body {
-      background-color: #000;
-      color: #00ff00;
-      font-family: 'Courier New', monospace;
-      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #1f1c2c, #928dab);
+      color: white;
       text-align: center;
+      padding: 40px;
     }
     input, button {
-      background-color: #111;
-      color: #00ff00;
-      border: 1px solid #00ff00;
       padding: 10px;
       margin: 10px;
       font-size: 16px;
+      border-radius: 5px;
+      border: none;
     }
-    #log {
+    .player-inputs {
       margin-top: 20px;
-      font-size: 18px;
-      white-space: pre-wrap;
     }
-    .hidden {
-      display: none;
+    .loader {
+      margin: 40px auto;
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #ffcc00;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
     }
-    .pulse {
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.3; }
-      100% { opacity: 1; }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <h1 class="pulse">🕵️‍♂️ UNDERCOVER - MODE SUSPENSE</h1>
+  <h1>🕵️‍♂️ Khufiya</h1>
+  <p>Combien de joueurs ?</p>
+  <input type="number" id="playerCount" min="2" max="20" placeholder="Ex: 5">
+  <button onclick="generateFields()">Valider</button>
 
-  <div id="join">
-    <input type="text" id="playerName" placeholder="Ton nom">
-    <input type="text" id="roomCode" placeholder="Code de la salle">
-    <button onclick="joinRoom()">Rejoindre</button>
-    <button onclick="createRoom()">Créer une salle</button>
+  <div class="player-inputs" id="playerInputs"></div>
+
+  <button onclick="startGame()" style="display:none;" id="startBtn">Créer la salle</button>
+
+  <div id="waitingScreen" style="display:none;">
+    <h2>En attente des joueurs...</h2>
+    <div class="loader"></div>
+    <p>Prépare-toi à deviner !</p>
   </div>
 
-  <div id="game" class="hidden">
-    <h2 id="status">En attente des joueurs...</h2>
-    <button onclick="startGame()">Démarrer la partie</button>
-    <div id="wordSection" class="hidden">
-      <h3>Ton mot secret :</h3>
-      <p id="yourWord" style="font-size: 24px;"></p>
-    </div>
-    <div id="voteSection" class="hidden">
-      <h3>Vote pour éliminer :</h3>
-      <div id="voteButtons"></div>
-    </div>
-    <div id="log"></div>
-  </div>
-
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <script>
-    const socket = io("https://khufiya-production.up.railway.app"); // Remplace par ton URL si hébergé
-    let playerName = "";
-    let roomCode = "";
+    const socket = io("https://khufiya-production.up.railway.app");
 
-    function createRoom() {
-      roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-      socket.emit("createRoom", roomCode);
-      document.getElementById("status").textContent = "Salle créée : " + roomCode;
-      document.getElementById("join").classList.add("hidden");
-      document.getElementById("game").classList.remove("hidden");
-    }
-
-    function joinRoom() {
-      playerName = document.getElementById("playerName").value.trim();
-      roomCode = document.getElementById("roomCode").value.trim().toUpperCase();
-      if (!playerName || !roomCode) return alert("Nom et code requis !");
-      socket.emit("joinRoom", { code: roomCode, name: playerName });
-      document.getElementById("join").classList.add("hidden");
-      document.getElementById("game").classList.remove("hidden");
-      document.getElementById("status").textContent = "Salle : " + roomCode;
+    function generateFields() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      const container = document.getElementById('playerInputs');
+      container.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Nom du joueur ${i}`;
+        input.id = `player${i}`;
+        container.appendChild(input);
+        container.appendChild(document.createElement('br'));
+      }
+      document.getElementById('startBtn').style.display = 'inline-block';
     }
 
     function startGame() {
-      socket.emit("startGame", roomCode);
-      document.getElementById("status").textContent = "Distribution des mots...";
+      const count = parseInt(document.getElementById('playerCount').value);
+      const noms = [];
+      for (let i = 1; i <= count; i++) {
+        const nom = document.getElementById(`player${i}`).value.trim();
+        if (nom) noms.push(nom);
+      }
+
+      if (noms.length < count) {
+        alert("Remplis tous les noms !");
+        return;
+      }
+
+      // Envoie les noms au serveur
+      socket.emit('creerSalle', { joueurs: noms });
+
+      // Affiche l'écran d'attente
+      document.getElementById('playerInputs').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'block';
     }
-
-    socket.on("yourWord", (word) => {
-      document.getElementById("wordSection").classList.remove("hidden");
-      document.getElementById("yourWord").textContent = word;
-    });
-
-    socket.on("playerList", (players) => {
-      document.getElementById("log").textContent = "Joueurs connectés :\n" + players.map(p => p.name).join("\n");
-      document.getElementById("voteButtons").innerHTML = "";
-      players.forEach(p => {
-        const btn = document.createElement("button");
-        btn.textContent = p.name;
-        btn.onclick = () => socket.emit("vote", { code: roomCode, votedId: p.id });
-        document.getElementById("voteButtons").appendChild(btn);
-      });
-      document.getElementById("voteSection").classList.remove("hidden");
-    });
-
-    socket.on("eliminated", (id) => {
-      document.getElementById("status").textContent = "Joueur éliminé : " + id;
-    });
-
-    socket.on("roomCreated", (code) => {
-      console.log("Salle créée :", code);
-    });
   </script>
 </body>
 </html>
