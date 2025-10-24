@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const motsHindi = require('./motsHindi'); // ✅ Liste des mots translittérés
+const motsHindi = require('./motsHindi');
 
 const app = express();
 app.use(cors());
@@ -18,14 +18,12 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-// ✅ Structure des salles
-const rooms = {}; // { roomId: { max: 10, joueurs: [{ id, nom }], mot, mystere } }
+const rooms = {}; // { roomId: { max, joueurs: [{ id, nom }], mot, mystere } }
 
 io.on('connection', (socket) => {
-  console.log("🟢 Nouveau joueur connecté :", socket.id);
+  console.log("🟢 Connecté :", socket.id);
 
-  // ✅ Création de salle par le créateur
-  socket.on('creerSalle', ({ roomId, max }) => {
+  socket.on('creerSalle', ({ roomId, max, nomCreateur }) => {
     if (rooms[roomId]) {
       socket.emit('erreur', "Cette salle existe déjà.");
       return;
@@ -33,7 +31,7 @@ io.on('connection', (socket) => {
 
     rooms[roomId] = {
       max,
-      joueurs: [],
+      joueurs: [{ id: socket.id, nom: nomCreateur }],
       mot: null,
       mystere: null
     };
@@ -42,7 +40,6 @@ io.on('connection', (socket) => {
     console.log(`🛠️ Salle ${roomId} créée pour ${max} joueurs`);
   });
 
-  // ✅ Rejoindre une salle en tant qu'invité
   socket.on('rejoindreSalle', ({ roomId, nom }) => {
     const salle = rooms[roomId];
     if (!salle) {
@@ -50,7 +47,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Vérifier si déjà plein
     if (salle.joueurs.length >= salle.max) {
       socket.emit('erreur', "La salle est complète.");
       return;
@@ -60,7 +56,6 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`👤 ${nom} a rejoint la salle ${roomId}`);
 
-    // ✅ Démarrer automatiquement si tous les joueurs sont là
     if (salle.joueurs.length === salle.max) {
       const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
       const indexMystere = Math.floor(Math.random() * salle.joueurs.length);
@@ -75,18 +70,16 @@ io.on('connection', (socket) => {
             message: "Tu es le Khufiya ! Ne révèle rien."
           });
         } else {
-          io.to(joueur.id).emit('motDistribue', mot); // { hindi, english }
+          io.to(joueur.id).emit('motDistribue', mot);
         }
       });
 
-      console.log(`🎯 Mot distribué : ${mot.hindi} (${mot.english}) — Khufiya : ${salle.joueurs[indexMystere].nom}`);
+      console.log(`🎯 Mot : ${mot.hindi} (${mot.english}) — Khufiya : ${salle.joueurs[indexMystere].nom}`);
     }
   });
 
-  // ✅ Déconnexion
   socket.on('disconnect', () => {
-    console.log("🔴 Joueur déconnecté :", socket.id);
-    // Optionnel : retirer le joueur des salles
+    console.log("🔴 Déconnecté :", socket.id);
     for (const roomId in rooms) {
       const salle = rooms[roomId];
       salle.joueurs = salle.joueurs.filter(j => j.id !== socket.id);
@@ -94,7 +87,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Port Railway ou local
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Serveur Khufiya lancé sur le port ${PORT}`);
