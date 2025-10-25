@@ -56,6 +56,31 @@
       box-shadow: 0 0 10px #39ff14;
       font-weight: bold;
     }
+    #btnVote {
+      margin-top: 20px;
+    }
+    .vote-animation {
+      font-size: 24px;
+      margin-top: 20px;
+      animation: clignote 1s infinite;
+    }
+    @keyframes clignote {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+    .vote-button {
+      margin: 5px;
+      background-color: #222;
+      color: #39ff14;
+      border: 1px solid #39ff14;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .vote-button:hover {
+      background-color: #333;
+    }
   </style>
 </head>
 <body>
@@ -92,6 +117,9 @@
       <h3>Joueurs connectés :</h3>
       <div id="joueursConnectes"></div>
     </div>
+    <div id="voteAnimation" class="vote-animation" style="display:none;">🗳️ Vote en cours...</div>
+    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
+    <div id="zoneVote" style="margin-top:20px;"></div>
   </div>
 
   <div id="motContainer" style="display:none; margin-top:30px;" class="start-animation">
@@ -106,6 +134,12 @@
     const roomId = params.get("room");
     let monNom = "";
     let salleId = "";
+    let monId = "";
+    let estCreateur = false;
+
+    socket.on('connect', () => {
+      monId = socket.id;
+    });
 
     if (roomId) {
       salleId = roomId;
@@ -119,6 +153,7 @@
       if (!nom || !count || count < 1) return alert("Remplis tous les champs");
 
       monNom = nom;
+      estCreateur = true;
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
 
@@ -170,12 +205,49 @@
     socket.on('miseAJourJoueurs', (liste) => {
       const container = document.getElementById('joueursConnectes');
       container.innerHTML = '';
-      liste.forEach(nom => {
+      liste.forEach(joueur => {
         const card = document.createElement('div');
         card.className = 'joueur-card';
-        card.innerText = nom;
+        card.innerText = joueur.nom;
         container.appendChild(card);
       });
+
+      if (estCreateur) {
+        document.getElementById('btnVote').style.display = 'inline-block';
+      }
+    });
+
+    function demarrerVote() {
+      socket.emit('demarrerVote', salleId);
+      document.getElement
+
+      function demarrerVote() {
+      socket.emit('demarrerVote', salleId);
+      document.getElementById('voteAnimation').style.display = 'block';
+      document.getElementById('zoneVote').innerHTML = '';
+    }
+
+    socket.on('voteCommence', (joueurs) => {
+      const zone = document.getElementById('zoneVote');
+      zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
+      joueurs.forEach(joueur => {
+        if (joueur.id !== monId) {
+          const btn = document.createElement('button');
+          btn.className = 'vote-button';
+          btn.innerText = joueur.nom;
+          btn.onclick = () => {
+            socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
+            zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
+          };
+          zone.appendChild(btn);
+        }
+      });
+    });
+
+    socket.on('joueurElimine', ({ id, nom }) => {
+      const zone = document.getElementById('zoneVote');
+      document.getElementById('voteAnimation').style.display = 'none';
+      zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
     });
   </script>
 </body>
