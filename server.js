@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const motsHindi = require('./motsHindi'); // Assure-toi que ce fichier existe
+const motsHindi = require('./motsHindi');
 
 const app = express();
 app.use(cors());
@@ -26,15 +26,16 @@ io.on('connection', (socket) => {
   socket.on('creerSalle', ({ roomId, max, nomCreateur }) => {
     rooms[roomId] = {
       max,
-      joueurs: [{ id: socket.id, nom: nomCreateur }],
+      joueurs: [{ id: socket.id, nom: nomCreateur, elimine: false }],
       mot: null,
-      mystere: null
+      mystere: null,
+      votes: {},
+      createurId: socket.id
     };
     socket.join(roomId);
     console.log(`🛠️ Salle ${roomId} créée par ${nomCreateur} pour ${max} joueurs`);
-    io.to(roomId).emit('miseAJourJoueurs', rooms[roomId].joueurs.map(j => j.nom));
+    io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
 
-    // Vérifier si la salle est déjà complète (cas max = 1)
     if (rooms[roomId].joueurs.length === max) {
       demarrerPartie(roomId);
     }
@@ -52,10 +53,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    salle.joueurs.push({ id: socket.id, nom });
+    salle.joueurs.push({ id: socket.id, nom, elimine: false });
     socket.join(roomId);
     console.log(`👤 ${nom} a rejoint la salle ${roomId}`);
-    io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
+    io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
     console.log(`👥 Salle ${roomId} contient ${salle.joueurs.length}/${salle.max} joueurs`);
 
     if (salle.joueurs.length === salle.max) {
@@ -86,18 +87,54 @@ io.on('connection', (socket) => {
     });
   }
 
+  socket.on('demarrerVote', (roomId) => {
+    const salle = rooms[roomId];
+    if (!salle || socket.id !== salle.createurId) return;
+    salle.votes = {};
+    io.to(roomId).emit('voteCommence', getJoueursActifs(roomId));
+    console.log(`🗳️ Vote lancé dans la salle ${roomId}`);
+  });
+
+  socket.on('voteContre', ({ roomId, cibleId }) => {
+    const salle = rooms[roomId];
+    if (!salle || salle.votes[socket.id]) return;
+
+    salle.votes[socket.id] = cibleId;
+    console.log(`📥 ${socket.id} vote contre ${cibleId}`);
+
+    const votants = Object.keys(salle.votes).length;
+    const total = getJoueursActifs(roomId).length;
+
+    if (votants === total) {
+      const resultats = {};
+      Object.values(salle.votes).forEach(id => {
+        resultats[id] = (resultats[id] || 0) + 1;
+      });
+
+      const [elimineId, voix] = Object.entries(resultats).sort((a, b) => b[1] - a[1])[0];
+      const joueur = salle.joueurs.find(j => j.id === elimineId);
+      if (joueur) {
+        joueur.elimine = true;
+        io.to(roomId).emit('joueurElimine', { id: elimineId, nom: joueur.nom });
+        console.log(`❌ ${joueur.nom} éliminé avec ${voix} voix`);
+      }
+
+      io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log("🔴 Déconnecté :", socket.id);
     for (const roomId in rooms) {
       const salle = rooms[roomId];
-      const avant = salle.joueurs.length;
       salle.joueurs = salle.joueurs.filter(j => j.id !== socket.id);
-      const apres = salle.joueurs.length;
-      if (avant !== apres) {
-        io.to(roomId).emit('miseAJourJoueurs', salle.joueurs.map(j => j.nom));
-      }
+      io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
     }
   });
+
+  function getJoueursActifs(roomId) {
+    return rooms[roomId].joueurs.filter(j => !j.elimine).map(j => ({ id: j.id, nom: j.nom }));
+  }
 });
 
 const PORT = process.env.PORT || 3000;
