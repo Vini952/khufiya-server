@@ -132,6 +132,18 @@ io.on('connection', (socket) => {
     }
   });
 
+socket.on('rejouer', (roomId) => {
+  const salle = rooms[roomId];
+  if (!salle || socket.id !== salle.createurId) return;
+
+  // ✅ Réinitialiser les votes et relancer avec joueurs non éliminés
+  salle.votes = {};
+  salle.joueurs = salle.joueurs.filter(j => !j.elimine); // garder les survivants
+  salle.joueurs.forEach(j => j.elimine = false); // réinitialiser l’état
+  demarrerPartie(roomId);
+  console.log(`🔁 Nouvelle partie relancée dans la salle ${roomId}`);
+});
+
   function getJoueursActifs(roomId) {
     return rooms[roomId].joueurs.filter(j => !j.elimine).map(j => ({ id: j.id, nom: j.nom }));
   }
