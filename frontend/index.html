@@ -180,14 +180,23 @@
       alert("Lien copié !");
     }
 
-    function afficherDebutPartie(message, detail) {
-      document.getElementById('waitingScreen').style.display = 'none';
-      const container = document.getElementById('motContainer');
-      container.classList.add('start-animation');
-      container.style.display = 'block';
-      document.getElementById('motMessage').innerText = message;
-      document.getElementById('motDetail').innerText = detail;
-    }
+   function afficherDebutPartie(message, detail) {
+  document.getElementById('waitingScreen').style.display = 'none';
+  const container = document.getElementById('motContainer');
+  container.classList.add('start-animation');
+  container.style.display = 'block';
+  document.getElementById('motMessage').innerText = message;
+  document.getElementById('motDetail').innerText = detail;
+
+  // ✅ Afficher le bouton de vote si tu es le créateur
+  if (estCreateur) {
+    document.getElementById('btnVote').style.display = 'inline-block';
+    console.log("✅ Bouton de vote affiché (créateur)");
+  } else {
+    console.log("ℹ️ Tu n'es pas le créateur, bouton non affiché");
+  }
+}
+
 
     socket.on('motDistribue', (mot) => {
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
