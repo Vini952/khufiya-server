@@ -241,10 +241,26 @@
     });
 
     socket.on('joueurElimine', ({ id, nom }) => {
-      const zone = document.getElementById('zoneVote');
-      document.getElementById('voteAnimation').style.display = 'none';
-      zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
-    });
+  const zone = document.getElementById('zoneVote');
+  document.getElementById('voteAnimation').style.display = 'none';
+  zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+
+  // ✅ Masquer le bouton de vote et la liste des joueurs
+  document.getElementById('btnVote').style.display = 'none';
+  document.getElementById('listeJoueurs').style.display = 'none';
+
+  // ✅ Afficher un bouton pour rejouer si créateur
+  if (estCreateur) {
+    const rejouerBtn = document.createElement('button');
+    rejouerBtn.innerText = "🔁 Relancer la partie";
+    rejouerBtn.onclick = () => {
+      socket.emit('rejouer', salleId);
+      zone.innerHTML = '<p>⏳ Nouvelle partie en cours...</p>';
+    };
+    zone.appendChild(rejouerBtn);
+  }
+});
+
   </script>
 </body>
 </html>
