@@ -57,7 +57,6 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`👤 ${nom} a rejoint la salle ${roomId}`);
     io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
-    console.log(`👥 Salle ${roomId} contient ${salle.joueurs.length}/${salle.max} joueurs`);
 
     if (salle.joueurs.length === salle.max) {
       demarrerPartie(roomId);
@@ -88,23 +87,28 @@ io.on('connection', (socket) => {
     });
   }
 
-socket.on('demarrerVote', (roomId) => {
-  console.log("📬 Vote reçu du client :", socket.id, "pour salle :", roomId);
-  const salle = rooms[roomId];
-  if (!salle || socket.id !== salle.createurId) {
-    console.log("⛔ Vote refusé : salle introuvable ou non-créateur");
-    return;
-  }
-  salle.votes = {};
-  const joueursActifs = getJoueursActifs(roomId);
-  console.log("📤 Envoi de voteCommence à :", joueursActifs.map(j => j.nom));
-  io.to(roomId).emit('voteCommence', joueursActifs);
-});
-
+  socket.on('demarrerVote', (roomId) => {
+    console.log("📬 Vote reçu du client :", socket.id, "pour salle :", roomId);
+    const salle = rooms[roomId];
+    if (!salle || socket.id !== salle.createurId) {
+      console.log("⛔ Vote refusé : salle introuvable ou non-créateur");
+      return;
+    }
+    salle.votes = {};
+    const joueursActifs = getJoueursActifs(roomId);
+    console.log("📤 Envoi de voteCommence à :", joueursActifs.map(j => j.nom));
+    io.to(roomId).emit('voteCommence', joueursActifs);
+  });
 
   socket.on('voteContre', ({ roomId, cibleId }) => {
     const salle = rooms[roomId];
     if (!salle || salle.votes[socket.id]) return;
+
+    const cible = salle.joueurs.find(j => j.id === cibleId);
+    if (!cible || cible.elimine) {
+      console.log("⛔ Vote invalide : joueur introuvable ou déjà éliminé");
+      return;
+    }
 
     salle.votes[socket.id] = cibleId;
     console.log(`📥 ${socket.id} vote contre ${cibleId}`);
@@ -124,6 +128,7 @@ socket.on('demarrerVote', (roomId) => {
 
       if (joueur) {
         joueur.elimine = true;
+        salle.votes = {};
         io.to(roomId).emit('joueurElimine', { id: elimineId, nom: joueur.nom });
         console.log(`❌ ${joueur.nom} éliminé avec ${voix} voix`);
 
@@ -134,6 +139,7 @@ socket.on('demarrerVote', (roomId) => {
           console.log(`🏁 Fin de partie : le Khufiya ${joueur.nom} a été trouvé`);
         } else {
           io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
+          io.to(salle.createurId).emit('autoriserVote');
         }
       }
     }
