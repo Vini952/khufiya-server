@@ -185,12 +185,14 @@
     <h2>En attente des joueurs...</h2>
     <div class="loader"></div>
     <p>La partie commencera automatiquement.</p>
-    <div id="listeJoueurs" style="margin-top:20px;">
-      <h3>Joueurs connectés :</h3>
-      <div id="joueursConnectes"></div>
-    </div>
     <div id="voteAnimation" class="vote-animation" style="display:none;">🗳️ Vote en cours...</div>
     <div id="zoneVote"></div>
+  </div>
+
+  <!-- ✅ Bloc déplacé ici pour rester visible -->
+  <div id="listeJoueurs" style="margin-top:20px;">
+    <h3>Joueurs connectés :</h3>
+    <div id="joueursConnectes"></div>
   </div>
 
   <div id="motContainer" class="start-animation">
@@ -305,6 +307,7 @@
         card.innerText = joueur.nom;
         container.appendChild(card);
       });
+      document.getElementById('listeJoueurs').style.display = 'block';
     });
 
     socket.on('voteCommence', (joueurs) => {
@@ -338,6 +341,7 @@
       document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
       btnVote.style.display = 'none';
       btnVote.disabled = true;
+      document.getElementById('listeJoueurs').style.display = 'none';
     });
 
     socket.on('autoriserVote', () => {
@@ -355,5 +359,3 @@
   </script>
 </body>
 </html>
-
-  
