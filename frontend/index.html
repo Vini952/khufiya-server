@@ -5,20 +5,9 @@
   <title>Khufiya - dhoondo mujhe</title>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(circle at top, #0f0f0f, #000);
-      color: #00ffcc;
-      text-align: center;
-      padding: 40px;
-      overflow-x: hidden;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at top, #0f0f0f, #000); color: #00ffcc; text-align: center; padding: 40px; overflow-x: hidden; }
     h1 { font-size: 48px; margin-bottom: 20px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; }
-    input, button {
-      padding: 12px 16px; margin: 10px; font-size: 16px; border-radius: 8px;
-      border: 1px solid #00ffcc; background-color: #111; color: #00ffcc;
-      box-shadow: 0 0 10px #00ffcc44; transition: all 0.2s ease;
-    }
+    input, button { padding: 12px 16px; margin: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #00ffcc; background-color: #111; color: #00ffcc; box-shadow: 0 0 10px #00ffcc44; transition: all 0.2s ease; }
     button:hover { transform: scale(1.03); cursor: pointer; }
     .loader { margin: 40px auto; border: 8px solid #222; border-top: 8px solid #00ffcc; border-radius:50%; width:60px; height:60px; animation: spin 1s linear infinite; }
     @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
@@ -87,23 +76,11 @@
     let estCreateur = false;
     let voteEnCours = false;
 
-    const btnVote = document.getElementById('btnVote');
-    const createRoomBtn = document.getElementById('createRoomBtn');
-    const joinRoomBtn = document.getElementById('joinRoomBtn');
-    const copierLienBtn = document.getElementById('copierLienBtn');
-    const replayBtn = document.getElementById('replayBtn');
+    // éléments UI (initialisés dans initUI)
+    let btnVote, createRoomBtn, joinRoomBtn, copierLienBtn, replayBtn;
 
-    socket.on('connect', () => {
-      monId = socket.id;
-      console.log("Socket connecté:", monId);
-      if (roomIdParam) {
-        salleId = roomIdParam;
-        document.getElementById('formCreateur').style.display = 'none';
-        document.getElementById('formInvite').style.display = 'block';
-      }
-    });
-
-    createRoomBtn.addEventListener('click', () => {
+    // handlers extraits pour pouvoir réutiliser / attacher proprement
+    function onCreateRoom() {
       const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
       if (!nom || !count || count < 1) return alert("Remplis tous les champs");
@@ -116,9 +93,9 @@
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
       console.log("Salle créée:", salleId);
-    });
+    }
 
-    joinRoomBtn.addEventListener('click', () => {
+    function onJoinRoom() {
       const nom = document.getElementById('prenomInvite').value.trim();
       if (!nom) return alert("Entre ton prénom");
       monNom = nom;
@@ -126,19 +103,77 @@
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
       console.log("Rejoint salle:", salleId);
-    });
+    }
 
-    copierLienBtn.addEventListener('click', () => {
+    function onCopierLien() {
       const input = document.getElementById('roomLink');
       input.select();
       document.execCommand('copy');
       alert("Lien copié !");
+    }
+
+    // initialisation sûre des éléments et listeners
+    function initUI() {
+      btnVote = document.getElementById('btnVote');
+      createRoomBtn = document.getElementById('createRoomBtn');
+      joinRoomBtn = document.getElementById('joinRoomBtn');
+      copierLienBtn = document.getElementById('copierLienBtn');
+      replayBtn = document.getElementById('replayBtn');
+
+      if (!btnVote) console.error("initUI: #btnVote introuvable");
+      if (!createRoomBtn) console.error("initUI: #createRoomBtn introuvable");
+      if (!joinRoomBtn) console.error("initUI: #joinRoomBtn introuvable");
+
+      if (createRoomBtn) createRoomBtn.removeEventListener('click', onCreateRoom);
+      if (joinRoomBtn) joinRoomBtn.removeEventListener('click', onJoinRoom);
+      if (copierLienBtn) copierLienBtn.removeEventListener('click', onCopierLien);
+
+      if (createRoomBtn) createRoomBtn.addEventListener('click', onCreateRoom);
+      if (joinRoomBtn) joinRoomBtn.addEventListener('click', onJoinRoom);
+      if (copierLienBtn) copierLienBtn.addEventListener('click', onCopierLien);
+      if (replayBtn) { replayBtn.removeEventListener('click', () => location.reload()); replayBtn.addEventListener('click', () => location.reload()); }
+
+      if (btnVote) {
+        // remplace le noeud pour effacer tout listener ancien
+        const newBtn = btnVote.cloneNode(true);
+        btnVote.parentNode.replaceChild(newBtn, btnVote);
+        btnVote = document.getElementById('btnVote');
+
+        btnVote.addEventListener('click', () => {
+          console.log("DEBUG: btnVote click — salleId:", salleId, "voteEnCours:", voteEnCours, "disabled:", btnVote.disabled);
+          if (!salleId) { console.error("salleId manquant"); return; }
+          if (voteEnCours) { console.log("vote déjà en cours"); return; }
+          voteEnCours = true;
+          btnVote.disabled = true;
+          socket.emit('demarrerVote', salleId);
+          document.getElementById('voteAnimation').style.display = 'block';
+          document.getElementById('zoneVote').innerHTML = '';
+        });
+      }
+    }
+
+    // Lance init après que le DOM soit prêt
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initUI();
+    } else {
+      document.addEventListener('DOMContentLoaded', initUI);
+    }
+
+    // socket events
+    socket.on('connect', () => {
+      monId = socket.id;
+      console.log("Socket connecté:", monId);
+      // si on arrive via lien
+      if (roomIdParam) {
+        salleId = roomIdParam;
+        document.getElementById('formCreateur').style.display = 'none';
+        document.getElementById('formInvite').style.display = 'block';
+      }
+      // ré-init UI si nécessaire
+      if (!btnVote) initUI();
     });
 
-    replayBtn.addEventListener('click', () => location.reload());
-
     function afficherDebutPartie(message, detail) {
-      // masquer la bannière d'attente et afficher le mot/écran de jeu
       document.getElementById('waitingScreen').style.display = 'none';
       const container = document.getElementById('motContainer');
       container.style.display = 'block';
@@ -146,7 +181,6 @@
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = detail;
 
-      // si le client est createur local, afficher et activer le bouton
       if (estCreateur && salleId) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
@@ -176,17 +210,7 @@
       });
     });
 
-    // bouton vote géré par script (évite onclick inline)
-    btnVote.addEventListener('click', () => {
-      if (!salleId) { console.error("salleId manquant"); return; }
-      if (voteEnCours) { console.log("vote déjà en cours"); return; }
-      console.log("demarrage du vote pour salle", salleId);
-      voteEnCours = true;
-      btnVote.disabled = true;
-      socket.emit('demarrerVote', salleId);
-      document.getElementById('voteAnimation').style.display = 'block';
-      document.getElementById('zoneVote').innerHTML = '';
-    });
+    btnVote && console.log("Initial btnVote state:", !!btnVote);
 
     socket.on('voteCommence', (joueurs) => {
       console.log("voteCommence reçu", joueurs);
@@ -194,7 +218,6 @@
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
       joueurs.forEach(joueur => {
-        // afficher aussi le créateur dans la liste ; chaque joueur peut voter contre n'importe qui sauf lui-même
         const btn = document.createElement('button');
         btn.className = 'vote-button';
         btn.innerText = joueur.nom;
@@ -214,7 +237,6 @@
       document.getElementById('voteAnimation').style.display = 'none';
       document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
       voteEnCours = false;
-      // le serveur émettra 'autoriserVote' au createur si nécessaire ; on désactive le bouton en attendant
       btnVote.disabled = true;
     });
 
@@ -227,7 +249,6 @@
       btnVote.style.display = 'none';
     });
 
-    // serveur autorise explicitement le créateur à relancer un vote (après élimination par ex.)
     socket.on('autoriserVote', () => {
       console.log("autoriserVote reçu");
       if (estCreateur) {
@@ -236,13 +257,11 @@
       }
     });
 
-    // pour debug : afficher erreur serveur éventuelle
     socket.on('erreur', (msg) => {
       console.error("Erreur serveur:", msg);
       alert(msg);
     });
 
-    // au chargement si l'utilisateur est arrivé via un lien room, garder salleId
     if (roomIdParam) {
       salleId = roomIdParam;
       console.log("Arrivé via lien room:", salleId);
