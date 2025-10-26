@@ -56,9 +56,6 @@
       box-shadow: 0 0 10px #39ff14;
       font-weight: bold;
     }
-    #btnVote {
-      margin-top: 20px;
-    }
     .vote-animation {
       font-size: 24px;
       margin-top: 20px;
@@ -118,7 +115,6 @@
       <div id="joueursConnectes"></div>
     </div>
     <div id="voteAnimation" class="vote-animation" style="display:none;">🗳️ Vote en cours...</div>
-    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
     <div id="zoneVote" style="margin-top:20px;"></div>
   </div>
 
@@ -126,6 +122,11 @@
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
     <button onclick="location.reload()">🔁 Rejouer</button>
+  </div>
+
+  <!-- ✅ Bouton de vote en dehors de waitingScreen -->
+  <div id="zoneControle" style="margin-top:20px;">
+    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
   </div>
 
   <script>
@@ -180,23 +181,18 @@
       alert("Lien copié !");
     }
 
-   function afficherDebutPartie(message, detail) {
-  document.getElementById('waitingScreen').style.display = 'none';
-  const container = document.getElementById('motContainer');
-  container.classList.add('start-animation');
-  container.style.display = 'block';
-  document.getElementById('motMessage').innerText = message;
-  document.getElementById('motDetail').innerText = detail;
+    function afficherDebutPartie(message, detail) {
+      document.getElementById('waitingScreen').style.display = 'none';
+      const container = document.getElementById('motContainer');
+      container.classList.add('start-animation');
+      container.style.display = 'block';
+      document.getElementById('motMessage').innerText = message;
+      document.getElementById('motDetail').innerText = detail;
 
-  // ✅ Afficher le bouton de vote si tu es le créateur
-  if (estCreateur) {
-    document.getElementById('btnVote').style.display = 'inline-block';
-    console.log("✅ Bouton de vote affiché (créateur)");
-  } else {
-    console.log("ℹ️ Tu n'es pas le créateur, bouton non affiché");
-  }
-}
-
+      if (estCreateur) {
+        document.getElementById('btnVote').style.display = 'inline-block';
+      }
+    }
 
     socket.on('motDistribue', (mot) => {
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
@@ -249,34 +245,36 @@
       });
     });
 
-  socket.on('joueurElimine', ({ id, nom }) => {
-  const zone = document.getElementById('zoneVote');
-  document.getElementById('voteAnimation').style.display = 'none';
-  zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+    socket.on('joueurElimine', ({ id, nom }) => {
+      const zone = document.getElementById('zoneVote');
+      document.getElementById('voteAnimation').style.display = 'none';
+      zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
 
-  // ✅ Si le Khufiya n’est pas encore trouvé, le créateur peut relancer un vote
-  if (estCreateur) {
-    document.getElementById('btnVote').style.display = 'inline-block';
-  }
-});
+      if (estCreateur) {
+        document.getElementById('btnVote').style.display = 'inline-block';
+      }
+    });
 
+    socket.on('finPartie', ({ message }) => {
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('motContainer').style.display = 'block';
+      document.getElementById('motMessage').innerText = message;
+      document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
 
-  // ✅ Masquer le bouton de vote et la liste des joueurs
-  document.getElementById('btnVote').style.display = 'none';
-  document.getElementById('listeJoueurs').style.display = 'none';
+      document.getElementById('btnVote').style.display = 'none';
+      document.getElementById('listeJoueurs').style.display = 'none';
 
-  // ✅ Afficher un bouton pour rejouer si créateur
-  if (estCreateur) {
-    const rejouerBtn = document.createElement('button');
-    rejouerBtn.innerText = "🔁 Relancer la partie";
-    rejouerBtn.onclick = () => {
-      socket.emit('rejouer', salleId);
-      zone.innerHTML = '<p>⏳ Nouvelle partie en cours...</p>';
-    };
-    zone.appendChild(rejouerBtn);
-  }
-});
-
+      const zone = document.getElementById('zoneVote');
+      if (estCreateur) {
+        const rejouerBtn = document.createElement('button');
+        rejouerBtn.innerText = "🔁 Relancer la partie";
+        rejouerBtn.onclick = () => {
+          socket.emit('rejouer', salleId);
+          zone.innerHTML = '<p>⏳ Nouvelle partie en cours...</p>';
+        };
+        zone.appendChild(rejouerBtn);
+      }
+    });
   </script>
 </body>
 </html>
