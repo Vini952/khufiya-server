@@ -92,8 +92,9 @@ io.on('connection', (socket) => {
     const salle = rooms[roomId];
     if (!salle || socket.id !== salle.createurId) return;
     salle.votes = {};
-    io.to(roomId).emit('voteCommence', getJoueursActifs(roomId));
-    console.log(`🗳️ Vote lancé dans la salle ${roomId}`);
+    const joueursActifs = getJoueursActifs(roomId);
+    console.log(`🗳️ Vote lancé dans la salle ${roomId} avec ${joueursActifs.length} joueurs`);
+    io.to(roomId).emit('voteCommence', joueursActifs);
   });
 
   socket.on('voteContre', ({ roomId, cibleId }) => {
@@ -105,6 +106,7 @@ io.on('connection', (socket) => {
 
     const votants = Object.keys(salle.votes).length;
     const total = getJoueursActifs(roomId).length;
+    console.log(`🔎 ${votants}/${total} votes reçus`);
 
     if (votants === total) {
       const resultats = {};
