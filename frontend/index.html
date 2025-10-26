@@ -124,7 +124,6 @@
     <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
 
-  <!-- ✅ Bouton de vote en dehors de waitingScreen -->
   <div id="zoneControle" style="margin-top:20px;">
     <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
   </div>
@@ -229,6 +228,7 @@
     }
 
     socket.on('voteCommence', (joueurs) => {
+      console.log("✅ VoteCommence reçu");
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
       joueurs.forEach(joueur => {
