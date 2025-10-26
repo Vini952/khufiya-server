@@ -13,127 +13,24 @@
       padding: 40px;
       overflow-x: hidden;
     }
-
-    h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
-      color: #00ffcc;
-      text-shadow: 0 0 20px #00ffcc;
-    }
-
+    h1 { font-size: 48px; margin-bottom: 20px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; }
     input, button {
-      padding: 12px 16px;
-      margin: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #00ffcc;
-      background-color: #111;
-      color: #00ffcc;
-      box-shadow: 0 0 10px #00ffcc44;
-      transition: all 0.3s ease;
+      padding: 12px 16px; margin: 10px; font-size: 16px; border-radius: 8px;
+      border: 1px solid #00ffcc; background-color: #111; color: #00ffcc;
+      box-shadow: 0 0 10px #00ffcc44; transition: all 0.2s ease;
     }
-
-    button:hover {
-      background-color: #222;
-      transform: scale(1.05);
-      box-shadow: 0 0 15px #00ffcc88;
-      cursor: pointer;
-    }
-
-    .loader {
-      margin: 40px auto;
-      border: 8px solid #222;
-      border-top: 8px solid #00ffcc;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .start-animation {
-      animation: fadeIn 1s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .joueur-card {
-      background-color: #111;
-      border: 1px solid #00ffcc;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin: 8px auto;
-      width: fit-content;
-      box-shadow: 0 0 12px #00ffcc88;
-      font-weight: bold;
-      transition: transform 0.2s ease;
-    }
-
-    .joueur-card:hover {
-      transform: scale(1.05);
-    }
-
-    .vote-animation {
-      font-size: 24px;
-      margin-top: 20px;
-      animation: clignote 1s infinite;
-      color: #ff4081;
-    }
-
-    @keyframes clignote {
-      0% { opacity: 1; }
-      50% { opacity: 0.3; }
-      100% { opacity: 1; }
-    }
-
-    .vote-button {
-      margin: 6px;
-      background-color: #222;
-      color: #00ffcc;
-      border: 1px solid #00ffcc;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .vote-button:hover {
-      background-color: #333;
-      box-shadow: 0 0 10px #00ffcc88;
-    }
-
-    #motContainer {
-      background-color: #111;
-      border: 2px solid #00ffcc;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 30px;
-      box-shadow: 0 0 20px #00ffcc88;
-    }
-
-    #motMessage {
-      font-size: 28px;
-      margin-bottom: 10px;
-      color: #00ffcc;
-      text-shadow: 0 0 10px #00ffcc;
-    }
-
-    #motDetail {
-      font-size: 18px;
-      color: #ccc;
-    }
-
-    #zoneVote {
-      margin-top: 20px;
-      padding: 10px;
-    }
+    button:hover { transform: scale(1.03); cursor: pointer; }
+    .loader { margin: 40px auto; border: 8px solid #222; border-top: 8px solid #00ffcc; border-radius:50%; width:60px; height:60px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
+    .joueur-card { background:#111; border:1px solid #00ffcc; border-radius:8px; padding:10px 14px; margin:8px auto; width:fit-content; box-shadow:0 0 12px #00ffcc88; font-weight:bold; }
+    .vote-animation { font-size:24px; margin-top:20px; animation: clignote 1s infinite; color:#ff4081; }
+    @keyframes clignote { 0%{opacity:1}50%{opacity:0.3}100%{opacity:1} }
+    .vote-button { margin:6px; background:#222; color:#00ffcc; border:1px solid #00ffcc; border-radius:6px; padding:8px 12px; }
+    #motContainer { background:#111; border:2px solid #00ffcc; border-radius:12px; padding:20px; margin-top:30px; box-shadow:0 0 20px #00ffcc88; display:none; }
+    #zoneVote { margin-top:20px; padding:10px; }
+    #zoneControle { margin-top:20px; }
+    #btnVote { display:none; background:#111; border:1px solid #00ffcc; color:#00ffcc; padding:12px 18px; font-size:18px; border-radius:8px; box-shadow:0 0 10px #00ffcc88; }
+    #btnVote[disabled] { opacity:0.5; transform:none; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -144,25 +41,25 @@
     <input type="text" id="nomCreateur" placeholder="Ex: Tailor">
     <p>Combien de joueurs ?</p>
     <input type="number" id="playerCount" min="1" max="20" placeholder="Ex: 3">
-    <button onclick="creerSalle()">Créer la salle</button>
+    <button id="createRoomBtn">Créer la salle</button>
   </div>
 
   <div id="roomLinkContainer" style="display:none;">
     <p>Lien d'invitation :</p>
     <input type="text" id="roomLink" readonly style="width:80%; font-size:16px;">
-    <button onclick="copierLien()">Copier</button>
+    <button id="copierLienBtn">Copier</button>
   </div>
 
   <div id="formInvite" style="display:none;">
     <p>Entre ton prénom pour rejoindre la partie :</p>
     <input type="text" id="prenomInvite" placeholder="Ton prénom">
-    <button onclick="rejoindreSalle()">Rejoindre</button>
+    <button id="joinRoomBtn">Rejoindre</button>
   </div>
 
   <div id="waitingScreen" style="display:none;">
-    <h2>En attente des joueurs...</h2>
+    <h2 id="waitingTitle">En attente des joueurs...</h2>
     <div class="loader"></div>
-    <p>La partie commencera automatiquement.</p>
+    <p id="waitingSub">La partie commencera automatiquement.</p>
     <div id="listeJoueurs" style="margin-top:20px;">
       <h3>Joueurs connectés :</h3>
       <div id="joueursConnectes"></div>
@@ -171,89 +68,104 @@
     <div id="zoneVote"></div>
   </div>
 
-  <div id="motContainer" style="display:none;" class="start-animation">
+  <div id="motContainer" class="start-animation">
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
-    <button onclick="location.reload()">🔁 Rejouer</button>
+    <button id="replayBtn">🔁 Rejouer</button>
   </div>
 
-  <div id="zoneControle" style="margin-top:20px;">
-    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
+  <div id="zoneControle">
+    <button id="btnVote" disabled>Lancer un vote</button>
   </div>
   <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
-    const roomId = params.get("room");
+    const roomIdParam = params.get("room");
     let monNom = "";
     let salleId = "";
     let monId = "";
     let estCreateur = false;
+    let voteEnCours = false;
+
+    const btnVote = document.getElementById('btnVote');
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const copierLienBtn = document.getElementById('copierLienBtn');
+    const replayBtn = document.getElementById('replayBtn');
 
     socket.on('connect', () => {
       monId = socket.id;
+      console.log("Socket connecté:", monId);
+      if (roomIdParam) {
+        salleId = roomIdParam;
+        document.getElementById('formCreateur').style.display = 'none';
+        document.getElementById('formInvite').style.display = 'block';
+      }
     });
 
-    if (roomId) {
-      salleId = roomId;
-      document.getElementById('formCreateur').style.display = 'none';
-      document.getElementById('formInvite').style.display = 'block';
-    }
-
-    function creerSalle() {
+    createRoomBtn.addEventListener('click', () => {
       const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
       if (!nom || !count || count < 1) return alert("Remplis tous les champs");
-
       monNom = nom;
       estCreateur = true;
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
-
-      const lien = window.location.origin + "/?room=" + salleId;
-      document.getElementById('roomLink').value = lien;
+      document.getElementById('roomLink').value = window.location.origin + "/?room=" + salleId;
       document.getElementById('roomLinkContainer').style.display = 'block';
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-    }
+      console.log("Salle créée:", salleId);
+    });
 
-    function rejoindreSalle() {
+    joinRoomBtn.addEventListener('click', () => {
       const nom = document.getElementById('prenomInvite').value.trim();
       if (!nom) return alert("Entre ton prénom");
       monNom = nom;
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-    }
+      console.log("Rejoint salle:", salleId);
+    });
 
-    function copierLien() {
+    copierLienBtn.addEventListener('click', () => {
       const input = document.getElementById('roomLink');
       input.select();
       document.execCommand('copy');
       alert("Lien copié !");
-    }
+    });
+
+    replayBtn.addEventListener('click', () => location.reload());
 
     function afficherDebutPartie(message, detail) {
+      // masquer la bannière d'attente et afficher le mot/écran de jeu
       document.getElementById('waitingScreen').style.display = 'none';
       const container = document.getElementById('motContainer');
-      container.classList.add('start-animation');
       container.style.display = 'block';
+      container.classList.add('start-animation');
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = detail;
 
+      // si le client est createur local, afficher et activer le bouton
       if (estCreateur && salleId) {
-        document.getElementById('btnVote').style.display = 'inline-block';
+        btnVote.style.display = 'inline-block';
+        btnVote.disabled = false;
+        console.log("Bouton vote affiché et activé pour le créateur");
       }
     }
 
     socket.on('motDistribue', (mot) => {
+      console.log("motDistribue reçu", mot);
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
     });
 
     socket.on('tuEsLeMystere', (data) => {
+      console.log("tuEsLeMystere reçu");
       afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
     });
 
     socket.on('miseAJourJoueurs', (liste) => {
+      console.log("miseAJourJoueurs:", liste);
       const container = document.getElementById('joueursConnectes');
       container.innerHTML = '';
       liste.forEach(joueur => {
@@ -264,47 +176,77 @@
       });
     });
 
-    function demarrerVote() {
+    // bouton vote géré par script (évite onclick inline)
+    btnVote.addEventListener('click', () => {
+      if (!salleId) { console.error("salleId manquant"); return; }
+      if (voteEnCours) { console.log("vote déjà en cours"); return; }
+      console.log("demarrage du vote pour salle", salleId);
+      voteEnCours = true;
+      btnVote.disabled = true;
       socket.emit('demarrerVote', salleId);
       document.getElementById('voteAnimation').style.display = 'block';
       document.getElementById('zoneVote').innerHTML = '';
-    }
+    });
 
     socket.on('voteCommence', (joueurs) => {
+      console.log("voteCommence reçu", joueurs);
+      voteEnCours = true;
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
       joueurs.forEach(joueur => {
-        if (joueur.id !== monId) {
-          const btn = document.createElement('button');
-          btn.className = 'vote-button';
-          btn.innerText = joueur.nom;
-          btn.onclick = () => {
-            socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
-            zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
-          };
-          zone.appendChild(btn);
-        }
+        // afficher aussi le créateur dans la liste ; chaque joueur peut voter contre n'importe qui sauf lui-même
+        const btn = document.createElement('button');
+        btn.className = 'vote-button';
+        btn.innerText = joueur.nom;
+        btn.disabled = (joueur.id === monId);
+        btn.onclick = () => {
+          if (btn.disabled) return;
+          console.log("Vote envoyé contre:", joueur.id);
+          socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
+          zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
+        };
+        zone.appendChild(btn);
       });
     });
 
     socket.on('joueurElimine', ({ id, nom }) => {
+      console.log("joueurElimine:", nom, id);
       document.getElementById('voteAnimation').style.display = 'none';
       document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+      voteEnCours = false;
+      // le serveur émettra 'autoriserVote' au createur si nécessaire ; on désactive le bouton en attendant
+      btnVote.disabled = true;
     });
 
     socket.on('finPartie', ({ message }) => {
+      console.log("finPartie:", message);
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('motContainer').style.display = 'block';
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
-      document.getElementById('btnVote').style.display = 'none';
+      btnVote.style.display = 'none';
     });
 
+    // serveur autorise explicitement le créateur à relancer un vote (après élimination par ex.)
     socket.on('autoriserVote', () => {
+      console.log("autoriserVote reçu");
       if (estCreateur) {
-        document.getElementById('btnVote').style.display = 'inline-block';
+        btnVote.style.display = 'inline-block';
+        btnVote.disabled = false;
       }
     });
+
+    // pour debug : afficher erreur serveur éventuelle
+    socket.on('erreur', (msg) => {
+      console.error("Erreur serveur:", msg);
+      alert(msg);
+    });
+
+    // au chargement si l'utilisateur est arrivé via un lien room, garder salleId
+    if (roomIdParam) {
+      salleId = roomIdParam;
+      console.log("Arrivé via lien room:", salleId);
+    }
   </script>
 </body>
 </html>
