@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Khufiya - Jeu de déduction</title>
+  <title>Khufiya - dhoondo mujhe</title>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
     body {
@@ -249,10 +249,17 @@
       });
     });
 
-    socket.on('joueurElimine', ({ id, nom }) => {
+  socket.on('joueurElimine', ({ id, nom }) => {
   const zone = document.getElementById('zoneVote');
   document.getElementById('voteAnimation').style.display = 'none';
   zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+
+  // ✅ Si le Khufiya n’est pas encore trouvé, le créateur peut relancer un vote
+  if (estCreateur) {
+    document.getElementById('btnVote').style.display = 'inline-block';
+  }
+});
+
 
   // ✅ Masquer le bouton de vote et la liste des joueurs
   document.getElementById('btnVote').style.display = 'none';
