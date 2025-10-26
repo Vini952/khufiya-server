@@ -136,12 +136,8 @@
     }
   </style>
 </head>
-
-  <body>
-  <h1>
-    <span style="color:#00ffcc;">🕵️‍♂️</span>
-    <span style="text-shadow: 0 0 10px #00ffcc;">Khufiya</span>
-  </h1>
+<body>
+  <h1>🕵️‍♂️ Khufiya</h1>
 
   <div id="formCreateur">
     <p>Ton prénom :</p>
@@ -172,20 +168,16 @@
       <div id="joueursConnectes"></div>
     </div>
     <div id="voteAnimation" class="vote-animation" style="display:none;">🗳️ Vote en cours...</div>
-    <div id="zoneVote" style="margin-top:20px;"></div>
+    <div id="zoneVote"></div>
+    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
   </div>
 
-  <div id="motContainer" style="display:none; margin-top:30px;" class="start-animation">
+  <div id="motContainer" style="display:none;" class="start-animation">
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
     <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
-
-  <div id="zoneControle" style="margin-top:20px;">
-    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
-  </div>
-
-  <script>
+    <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
@@ -238,7 +230,7 @@
     }
 
     function afficherDebutPartie(message, detail) {
-      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'block';
       const container = document.getElementById('motContainer');
       container.classList.add('start-animation');
       container.style.display = 'block';
@@ -247,7 +239,6 @@
 
       if (estCreateur && salleId) {
         document.getElementById('btnVote').style.display = 'inline-block';
-        console.log("✅ Bouton de vote affiché pour le créateur");
       }
     }
 
@@ -259,11 +250,6 @@
       afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
     });
 
-    socket.on('erreur', (msg) => {
-      alert(msg);
-      location.reload();
-    });
-
     socket.on('miseAJourJoueurs', (liste) => {
       const container = document.getElementById('joueursConnectes');
       container.innerHTML = '';
@@ -273,25 +259,15 @@
         card.innerText = joueur.nom;
         container.appendChild(card);
       });
-
-      if (estCreateur) {
-        document.getElementById('btnVote').style.display = 'inline-block';
-      }
     });
 
     function demarrerVote() {
-      if (!salleId) {
-        console.error("❌ salleId est vide, impossible de lancer le vote");
-        return;
-      }
-      console.log("🟢 Bouton vote cliqué pour salle :", salleId);
       socket.emit('demarrerVote', salleId);
       document.getElementById('voteAnimation').style.display = 'block';
       document.getElementById('zoneVote').innerHTML = '';
     }
 
     socket.on('voteCommence', (joueurs) => {
-      console.log("📥 voteCommence reçu avec joueurs :", joueurs);
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
       joueurs.forEach(joueur => {
@@ -300,7 +276,6 @@
           btn.className = 'vote-button';
           btn.innerText = joueur.nom;
           btn.onclick = () => {
-            console.log("📤 Vote contre :", joueur.id);
             socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
             zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
           };
@@ -310,13 +285,8 @@
     });
 
     socket.on('joueurElimine', ({ id, nom }) => {
-      const zone = document.getElementById('zoneVote');
       document.getElementById('voteAnimation').style.display = 'none';
-      zone.innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
-
-      if (estCreateur) {
-        document.getElementById('btnVote').style.display = 'inline-block';
-      }
+      document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
     });
 
     socket.on('finPartie', ({ message }) => {
@@ -324,22 +294,14 @@
       document.getElementById('motContainer').style.display = 'block';
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
-
       document.getElementById('btnVote').style.display = 'none';
-      document.getElementById('listeJoueurs').style.display = 'none';
+    });
 
-      const zone = document.getElementById('zoneVote');
+    socket.on('autoriserVote', () => {
       if (estCreateur) {
-        const rejouerBtn = document.createElement('button');
-        rejouerBtn.innerText = "🔁 Relancer la partie";
-        rejouerBtn.onclick = () => {
-          socket.emit('rejouer', salleId);
-          zone.innerHTML = '<p>⏳ Nouvelle partie en cours...</p>';
-        };
-        zone.appendChild(rejouerBtn);
+        document.getElementById('btnVote').style.display = 'inline-block';
       }
     });
   </script>
 </body>
 </html>
-
