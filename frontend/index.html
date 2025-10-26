@@ -169,7 +169,6 @@
     </div>
     <div id="voteAnimation" class="vote-animation" style="display:none;">🗳️ Vote en cours...</div>
     <div id="zoneVote"></div>
-    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
   </div>
 
   <div id="motContainer" style="display:none;" class="start-animation">
@@ -177,7 +176,11 @@
     <p id="motDetail"></p>
     <button onclick="location.reload()">🔁 Rejouer</button>
   </div>
-    <script>
+
+  <div id="zoneControle" style="margin-top:20px;">
+    <button id="btnVote" style="display:none;" onclick="demarrerVote()">Lancer un vote</button>
+  </div>
+  <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
