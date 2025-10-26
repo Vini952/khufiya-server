@@ -95,33 +95,44 @@ io.on('connection', (socket) => {
     console.log(`🗳️ Vote lancé dans la salle ${roomId}`);
   });
 
-  socket.on('voteContre', ({ roomId, cibleId }) => {
-    const salle = rooms[roomId];
-    if (!salle || salle.votes[socket.id]) return;
+socket.on('voteContre', ({ roomId, cibleId }) => {
+  const salle = rooms[roomId];
+  if (!salle || salle.votes[socket.id]) return;
 
-    salle.votes[socket.id] = cibleId;
-    console.log(`📥 ${socket.id} vote contre ${cibleId}`);
+  salle.votes[socket.id] = cibleId;
+  console.log(`📥 ${socket.id} vote contre ${cibleId}`);
 
-    const votants = Object.keys(salle.votes).length;
-    const total = getJoueursActifs(roomId).length;
+  const votants = Object.keys(salle.votes).length;
+  const total = getJoueursActifs(roomId).length;
 
-    if (votants === total) {
-      const resultats = {};
-      Object.values(salle.votes).forEach(id => {
-        resultats[id] = (resultats[id] || 0) + 1;
-      });
+  if (votants === total) {
+    const resultats = {};
+    Object.values(salle.votes).forEach(id => {
+      resultats[id] = (resultats[id] || 0) + 1;
+    });
 
-      const [elimineId, voix] = Object.entries(resultats).sort((a, b) => b[1] - a[1])[0];
-      const joueur = salle.joueurs.find(j => j.id === elimineId);
-      if (joueur) {
-        joueur.elimine = true;
-        io.to(roomId).emit('joueurElimine', { id: elimineId, nom: joueur.nom });
-        console.log(`❌ ${joueur.nom} éliminé avec ${voix} voix`);
+    const [elimineId, voix] = Object.entries(resultats).sort((a, b) => b[1] - a[1])[0];
+    const joueur = salle.joueurs.find(j => j.id === elimineId);
+
+    if (joueur) {
+      joueur.elimine = true;
+      io.to(roomId).emit('joueurElimine', { id: elimineId, nom: joueur.nom });
+      console.log(`❌ ${joueur.nom} éliminé avec ${voix} voix`);
+
+      // ✅ Vérifie si le Khufiya est éliminé
+      if (elimineId === salle.mystere) {
+        io.to(roomId).emit('finPartie', {
+          message: `🎯 Le Khufiya (${joueur.nom}) a été éliminé !`
+        });
+        console.log(`🏁 Fin de partie : le Khufiya ${joueur.nom} a été trouvé`);
+      } else {
+        // ✅ Sinon, mise à jour des joueurs et possibilité de relancer un vote
+        io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
       }
-
-      io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
     }
-  });
+  }
+});
+
 
   socket.on('disconnect', () => {
     console.log("🔴 Déconnecté :", socket.id);
