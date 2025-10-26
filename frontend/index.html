@@ -112,44 +112,53 @@
       alert("Lien copié !");
     }
 
+    // fonction utilitaire corrigée pour envoreNote (si utilisée)
+    function envoreNote() {
+      const el = document.getElementById('motde1');
+      if (!el) return console.warn('envoreNote: #motde1 introuvable');
+      el.style.fontSize = "20px";
+      el.style.color = "red";
+    }
+
+    // attacher proprement le bouton de vote (remplace listeners anciens)
+    function attachBtnVote() {
+      btnVote = document.getElementById('btnVote');
+      if (!btnVote) { console.error('attachBtnVote: #btnVote introuvable'); return; }
+
+      // remplace le noeud pour supprimer anciens handlers
+      try { btnVote.parentNode.replaceChild(btnVote.cloneNode(true), btnVote); } catch(e) {}
+      btnVote = document.getElementById('btnVote');
+
+      // état initial
+      btnVote.style.display = 'none';
+      btnVote.disabled = true;
+
+      btnVote.addEventListener('click', () => {
+        console.log("DEBUG: btnVote click — salleId:", salleId, "voteEnCours:", voteEnCours, "disabled:", btnVote.disabled);
+        if (!salleId) { console.error("salleId manquant"); return; }
+        if (voteEnCours) { console.log("vote déjà en cours"); return; }
+        voteEnCours = true;
+        btnVote.disabled = true;
+        socket.emit('demarrerVote', salleId);
+        document.getElementById('voteAnimation').style.display = 'block';
+        document.getElementById('zoneVote').innerHTML = '';
+      });
+    }
+
     // initialisation sûre des éléments et listeners
     function initUI() {
-      btnVote = document.getElementById('btnVote');
       createRoomBtn = document.getElementById('createRoomBtn');
       joinRoomBtn = document.getElementById('joinRoomBtn');
       copierLienBtn = document.getElementById('copierLienBtn');
       replayBtn = document.getElementById('replayBtn');
 
-      if (!btnVote) console.error("initUI: #btnVote introuvable");
-      if (!createRoomBtn) console.error("initUI: #createRoomBtn introuvable");
-      if (!joinRoomBtn) console.error("initUI: #joinRoomBtn introuvable");
-
-      if (createRoomBtn) createRoomBtn.removeEventListener('click', onCreateRoom);
-      if (joinRoomBtn) joinRoomBtn.removeEventListener('click', onJoinRoom);
-      if (copierLienBtn) copierLienBtn.removeEventListener('click', onCopierLien);
-
-      if (createRoomBtn) createRoomBtn.addEventListener('click', onCreateRoom);
-      if (joinRoomBtn) joinRoomBtn.addEventListener('click', onJoinRoom);
-      if (copierLienBtn) copierLienBtn.addEventListener('click', onCopierLien);
+      if (createRoomBtn) { createRoomBtn.removeEventListener('click', onCreateRoom); createRoomBtn.addEventListener('click', onCreateRoom); }
+      if (joinRoomBtn) { joinRoomBtn.removeEventListener('click', onJoinRoom); joinRoomBtn.addEventListener('click', onJoinRoom); }
+      if (copierLienBtn) { copierLienBtn.removeEventListener('click', onCopierLien); copierLienBtn.addEventListener('click', onCopierLien); }
       if (replayBtn) { replayBtn.removeEventListener('click', () => location.reload()); replayBtn.addEventListener('click', () => location.reload()); }
 
-      if (btnVote) {
-        // remplace le noeud pour effacer tout listener ancien
-        const newBtn = btnVote.cloneNode(true);
-        btnVote.parentNode.replaceChild(newBtn, btnVote);
-        btnVote = document.getElementById('btnVote');
-
-        btnVote.addEventListener('click', () => {
-          console.log("DEBUG: btnVote click — salleId:", salleId, "voteEnCours:", voteEnCours, "disabled:", btnVote.disabled);
-          if (!salleId) { console.error("salleId manquant"); return; }
-          if (voteEnCours) { console.log("vote déjà en cours"); return; }
-          voteEnCours = true;
-          btnVote.disabled = true;
-          socket.emit('demarrerVote', salleId);
-          document.getElementById('voteAnimation').style.display = 'block';
-          document.getElementById('zoneVote').innerHTML = '';
-        });
-      }
+      attachBtnVote();
+      console.log("initUI: éléments initialisés");
     }
 
     // Lance init après que le DOM soit prêt
@@ -168,10 +177,11 @@
         document.getElementById('formCreateur').style.display = 'none';
         document.getElementById('formInvite').style.display = 'block';
       }
-      if (!btnVote) initUI();
+      if (!btnVote) attachBtnVote();
     });
 
     function afficherDebutPartie(message, detail) {
+      // masquer bannière d'attente et afficher zone mot
       document.getElementById('waitingScreen').style.display = 'none';
       const container = document.getElementById('motContainer');
       container.style.display = 'block';
@@ -179,7 +189,7 @@
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = detail;
 
-      if (estCreateur && salleId) {
+      if (estCreateur && salleId && btnVote) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
         console.log("Bouton vote affiché et activé pour le créateur");
