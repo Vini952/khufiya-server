@@ -180,18 +180,20 @@
       alert("Lien copié !");
     }
 
-    function afficherDebutPartie(message, detail) {
-      document.getElementById('waitingScreen').style.display = 'none';
-      const container = document.getElementById('motContainer');
-      container.classList.add('start-animation');
-      container.style.display = 'block';
-      document.getElementById('motMessage').innerText = message;
-      document.getElementById('motDetail').innerText = detail;
+  function afficherDebutPartie(message, detail) {
+  document.getElementById('waitingScreen').style.display = 'none';
+  const container = document.getElementById('motContainer');
+  container.classList.add('start-animation');
+  container.style.display = 'block';
+  document.getElementById('motMessage').innerText = message;
+  document.getElementById('motDetail').innerText = detail;
 
-      if (estCreateur) {
-        document.getElementById('btnVote').style.display = 'inline-block';
-      }
-    }
+  // ✅ Afficher le bouton de vote uniquement après le démarrage
+  if (estCreateur) {
+    document.getElementById('btnVote').style.display = 'inline-block';
+    console.log("✅ Bouton de vote affiché (créateur)");
+  }
+}
 
     socket.on('motDistribue', (mot) => {
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
@@ -222,8 +224,11 @@
     });
 
 function demarrerVote() {
-  console.log("🟢 Bouton vote cliqué");
-  console.log("📤 Envoi vote pour salle :", salleId);
+  if (!salleId) {
+    console.error("❌ salleId est vide, impossible de lancer le vote");
+    return;
+  }
+  console.log("🟢 Bouton vote cliqué pour salle :", salleId);
   socket.emit('demarrerVote', salleId);
   document.getElementById('voteAnimation').style.display = 'block';
   document.getElementById('zoneVote').innerHTML = '';
