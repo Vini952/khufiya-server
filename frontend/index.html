@@ -221,29 +221,33 @@
       }
     });
 
-    function demarrerVote() {
-      socket.emit('demarrerVote', salleId);
-      document.getElementById('voteAnimation').style.display = 'block';
-      document.getElementById('zoneVote').innerHTML = '';
-    }
+function demarrerVote() {
+  console.log("🟢 Bouton vote cliqué");
+  console.log("📤 Envoi vote pour salle :", salleId);
+  socket.emit('demarrerVote', salleId);
+  document.getElementById('voteAnimation').style.display = 'block';
+  document.getElementById('zoneVote').innerHTML = '';
+}
 
-    socket.on('voteCommence', (joueurs) => {
-      console.log("✅ VoteCommence reçu");
-      const zone = document.getElementById('zoneVote');
-      zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
-      joueurs.forEach(joueur => {
-        if (joueur.id !== monId) {
-          const btn = document.createElement('button');
-          btn.className = 'vote-button';
-          btn.innerText = joueur.nom;
-          btn.onclick = () => {
-            socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
-            zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
-          };
-          zone.appendChild(btn);
-        }
-      });
-    });
+
+socket.on('voteCommence', (joueurs) => {
+  console.log("📥 voteCommence reçu avec joueurs :", joueurs);
+  const zone = document.getElementById('zoneVote');
+  zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
+  joueurs.forEach(joueur => {
+    if (joueur.id !== monId) {
+      const btn = document.createElement('button');
+      btn.className = 'vote-button';
+      btn.innerText = joueur.nom;
+      btn.onclick = () => {
+        console.log("📤 Vote contre :", joueur.id);
+        socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
+        zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
+      };
+      zone.appendChild(btn);
+    }
+  });
+});
 
     socket.on('joueurElimine', ({ id, nom }) => {
       const zone = document.getElementById('zoneVote');
