@@ -88,14 +88,19 @@ io.on('connection', (socket) => {
     });
   }
 
-  socket.on('demarrerVote', (roomId) => {
-    const salle = rooms[roomId];
-    if (!salle || socket.id !== salle.createurId) return;
-    salle.votes = {};
-    const joueursActifs = getJoueursActifs(roomId);
-    console.log(`🗳️ Vote lancé dans la salle ${roomId} avec ${joueursActifs.length} joueurs`);
-    io.to(roomId).emit('voteCommence', joueursActifs);
-  });
+socket.on('demarrerVote', (roomId) => {
+  console.log("📬 Vote reçu du client :", socket.id, "pour salle :", roomId);
+  const salle = rooms[roomId];
+  if (!salle || socket.id !== salle.createurId) {
+    console.log("⛔ Vote refusé : salle introuvable ou non-créateur");
+    return;
+  }
+  salle.votes = {};
+  const joueursActifs = getJoueursActifs(roomId);
+  console.log("📤 Envoi de voteCommence à :", joueursActifs.map(j => j.nom));
+  io.to(roomId).emit('voteCommence', joueursActifs);
+});
+
 
   socket.on('voteContre', ({ roomId, cibleId }) => {
     const salle = rooms[roomId];
