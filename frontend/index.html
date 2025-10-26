@@ -5,21 +5,157 @@
   <title>Khufiya - dhoondo mujhe</title>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at top, #0f0f0f, #000); color: #00ffcc; text-align: center; padding: 40px; overflow-x: hidden; }
-    h1 { font-size: 48px; margin-bottom: 20px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; }
-    input, button { padding: 12px 16px; margin: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #00ffcc; background-color: #111; color: #00ffcc; box-shadow: 0 0 10px #00ffcc44; transition: all 0.2s ease; }
-    button:hover { transform: scale(1.03); cursor: pointer; }
-    .loader { margin: 40px auto; border: 8px solid #222; border-top: 8px solid #00ffcc; border-radius:50%; width:60px; height:60px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
-    .joueur-card { background:#111; border:1px solid #00ffcc; border-radius:8px; padding:10px 14px; margin:8px auto; width:fit-content; box-shadow:0 0 12px #00ffcc88; font-weight:bold; }
-    .vote-animation { font-size:24px; margin-top:20px; animation: clignote 1s infinite; color:#ff4081; }
-    @keyframes clignote { 0%{opacity:1}50%{opacity:0.3}100%{opacity:1} }
-    .vote-button { margin:6px; background:#222; color:#00ffcc; border:1px solid #00ffcc; border-radius:6px; padding:8px 12px; }
-    #motContainer { background:#111; border:2px solid #00ffcc; border-radius:12px; padding:20px; margin-top:30px; box-shadow:0 0 20px #00ffcc88; display:none; }
-    #zoneVote { margin-top:20px; padding:10px; }
-    #zoneControle { margin-top:20px; }
-    #btnVote { display:none; background:#111; border:1px solid #00ffcc; color:#00ffcc; padding:12px 18px; font-size:18px; border-radius:8px; box-shadow:0 0 10px #00ffcc88; }
-    #btnVote[disabled] { opacity:0.5; transform:none; cursor:not-allowed; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top, #0f0f0f, #000);
+      color: #00ffcc;
+      text-align: center;
+      padding: 40px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #00ffcc;
+      text-shadow: 0 0 20px #00ffcc;
+    }
+
+    input, button {
+      padding: 12px 16px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #00ffcc;
+      background-color: #111;
+      color: #00ffcc;
+      box-shadow: 0 0 10px #00ffcc44;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #222;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #00ffcc88;
+      cursor: pointer;
+    }
+
+    .loader {
+      margin: 40px auto;
+      border: 8px solid #222;
+      border-top: 8px solid #00ffcc;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .start-animation {
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .joueur-card {
+      background-color: #111;
+      border: 1px solid #00ffcc;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 8px auto;
+      width: fit-content;
+      box-shadow: 0 0 12px #00ffcc88;
+      font-weight: bold;
+      transition: transform 0.2s ease;
+    }
+
+    .joueur-card:hover {
+      transform: scale(1.05);
+    }
+
+    .vote-animation {
+      font-size: 24px;
+      margin-top: 20px;
+      animation: clignote 1s infinite;
+      color: #ff4081;
+    }
+
+    @keyframes clignote {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    .vote-button {
+      margin: 6px;
+      background-color: #222;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .vote-button:hover {
+      background-color: #333;
+      box-shadow: 0 0 10px #00ffcc88;
+    }
+
+    #motContainer {
+      background-color: #111;
+      border: 2px solid #00ffcc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      box-shadow: 0 0 20px #00ffcc88;
+      display: none;
+    }
+
+    #motMessage {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #00ffcc;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+
+    #motDetail {
+      font-size: 18px;
+      color: #ccc;
+    }
+
+    #zoneVote {
+      margin-top: 20px;
+      padding: 10px;
+    }
+
+    #zoneControle {
+      margin-top: 20px;
+    }
+
+    #btnVote {
+      display: none;
+      background-color: #111;
+      border: 1px solid #00ffcc;
+      color: #00ffcc;
+      padding: 12px 18px;
+      font-size: 18px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00ffcc88;
+    }
+
+    #btnVote[disabled] {
+      opacity: 0.5;
+      transform: none;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -46,9 +182,9 @@
   </div>
 
   <div id="waitingScreen" style="display:none;">
-    <h2 id="waitingTitle">En attente des joueurs...</h2>
+    <h2>En attente des joueurs...</h2>
     <div class="loader"></div>
-    <p id="waitingSub">La partie commencera automatiquement.</p>
+    <p>La partie commencera automatiquement.</p>
     <div id="listeJoueurs" style="margin-top:20px;">
       <h3>Joueurs connectés :</h3>
       <div id="joueursConnectes"></div>
@@ -76,99 +212,57 @@
     let estCreateur = false;
     let voteEnCours = false;
 
-    // éléments UI (initialisés dans initUI)
-    let btnVote, createRoomBtn, joinRoomBtn, copierLienBtn, replayBtn;
+    const btnVote = document.getElementById('btnVote');
+    const createRoomBtn = document.getElementById('createRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const copierLienBtn = document.getElementById('copierLienBtn');
+    const replayBtn = document.getElementById('replayBtn');
 
-    // handlers extraits
-    function onCreateRoom() {
+    createRoomBtn.addEventListener('click', () => {
       const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
       if (!nom || !count || count < 1) return alert("Remplis tous les champs");
+
       monNom = nom;
       estCreateur = true;
       salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
+
       document.getElementById('roomLink').value = window.location.origin + "/?room=" + salleId;
       document.getElementById('roomLinkContainer').style.display = 'block';
       document.getElementById('formCreateur').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-      console.log("Salle créée:", salleId);
-    }
+    });
 
-    function onJoinRoom() {
+    joinRoomBtn.addEventListener('click', () => {
       const nom = document.getElementById('prenomInvite').value.trim();
       if (!nom) return alert("Entre ton prénom");
       monNom = nom;
+      salleId = roomIdParam;
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
       document.getElementById('formInvite').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'block';
-      console.log("Rejoint salle:", salleId);
-    }
+    });
 
-    function onCopierLien() {
+    copierLienBtn.addEventListener('click', () => {
       const input = document.getElementById('roomLink');
       input.select();
       document.execCommand('copy');
       alert("Lien copié !");
-    }
+    });
 
-    // fonction utilitaire corrigée pour envoreNote (si utilisée)
-    function envoreNote() {
-      const el = document.getElementById('motde1');
-      if (!el) return console.warn('envoreNote: #motde1 introuvable');
-      el.style.fontSize = "20px";
-      el.style.color = "red";
-    }
+    replayBtn.addEventListener('click', () => location.reload());
 
-    // attacher proprement le bouton de vote (remplace listeners anciens)
-    function attachBtnVote() {
-      btnVote = document.getElementById('btnVote');
-      if (!btnVote) { console.error('attachBtnVote: #btnVote introuvable'); return; }
-
-      // remplace le noeud pour supprimer anciens handlers
-      try { btnVote.parentNode.replaceChild(btnVote.cloneNode(true), btnVote); } catch(e) {}
-      btnVote = document.getElementById('btnVote');
-
-      // état initial
-      btnVote.style.display = 'none';
+    btnVote.addEventListener('click', () => {
+      console.log("CLIENT: Envoi demarrerVote avec salleId =", salleId);
+      if (!salleId || voteEnCours) return;
+      voteEnCours = true;
       btnVote.disabled = true;
+      socket.emit('demarrerVote', salleId);
+      document.getElementById('voteAnimation').style.display = 'block';
+      document.getElementById('zoneVote').innerHTML = '';
+    });
 
-      btnVote.addEventListener('click', () => {
-        console.log("DEBUG: btnVote click — salleId:", salleId, "voteEnCours:", voteEnCours, "disabled:", btnVote.disabled);
-        if (!salleId) { console.error("salleId manquant"); return; }
-        if (voteEnCours) { console.log("vote déjà en cours"); return; }
-        voteEnCours = true;
-        btnVote.disabled = true;
-        socket.emit('demarrerVote', salleId);
-        document.getElementById('voteAnimation').style.display = 'block';
-        document.getElementById('zoneVote').innerHTML = '';
-      });
-    }
-
-    // initialisation sûre des éléments et listeners
-    function initUI() {
-      createRoomBtn = document.getElementById('createRoomBtn');
-      joinRoomBtn = document.getElementById('joinRoomBtn');
-      copierLienBtn = document.getElementById('copierLienBtn');
-      replayBtn = document.getElementById('replayBtn');
-
-      if (createRoomBtn) { createRoomBtn.removeEventListener('click', onCreateRoom); createRoomBtn.addEventListener('click', onCreateRoom); }
-      if (joinRoomBtn) { joinRoomBtn.removeEventListener('click', onJoinRoom); joinRoomBtn.addEventListener('click', onJoinRoom); }
-      if (copierLienBtn) { copierLienBtn.removeEventListener('click', onCopierLien); copierLienBtn.addEventListener('click', onCopierLien); }
-      if (replayBtn) { replayBtn.removeEventListener('click', () => location.reload()); replayBtn.addEventListener('click', () => location.reload()); }
-
-      attachBtnVote();
-      console.log("initUI: éléments initialisés");
-    }
-
-    // Lance init après que le DOM soit prêt
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      initUI();
-    } else {
-      document.addEventListener('DOMContentLoaded', initUI);
-    }
-
-    // socket events
     socket.on('connect', () => {
       monId = socket.id;
       console.log("Socket connecté:", monId);
@@ -177,11 +271,9 @@
         document.getElementById('formCreateur').style.display = 'none';
         document.getElementById('formInvite').style.display = 'block';
       }
-      if (!btnVote) attachBtnVote();
     });
 
     function afficherDebutPartie(message, detail) {
-      // masquer bannière d'attente et afficher zone mot
       document.getElementById('waitingScreen').style.display = 'none';
       const container = document.getElementById('motContainer');
       container.style.display = 'block';
@@ -189,7 +281,7 @@
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = detail;
 
-      if (estCreateur && salleId && btnVote) {
+      if (estCreateur) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
         console.log("Bouton vote affiché et activé pour le créateur");
@@ -197,17 +289,14 @@
     }
 
     socket.on('motDistribue', (mot) => {
-      console.log("motDistribue reçu", mot);
       afficherDebutPartie("🎉 La partie commence ! Mot à deviner :", mot.hindi + " (" + mot.english + ")");
     });
 
     socket.on('tuEsLeMystere', (data) => {
-      console.log("tuEsLeMystere reçu");
       afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
     });
 
     socket.on('miseAJourJoueurs', (liste) => {
-      console.log("miseAJourJoueurs:", liste);
       const container = document.getElementById('joueursConnectes');
       container.innerHTML = '';
       liste.forEach(joueur => {
@@ -219,8 +308,6 @@
     });
 
     socket.on('voteCommence', (joueurs) => {
-      console.log("voteCommence reçu", joueurs);
-      voteEnCours = true;
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
       joueurs.forEach(joueur => {
@@ -230,7 +317,6 @@
         btn.disabled = (joueur.id === monId);
         btn.onclick = () => {
           if (btn.disabled) return;
-          console.log("Vote envoyé contre:", joueur.id);
           socket.emit('voteContre', { roomId: salleId, cibleId: joueur.id });
           zone.innerHTML = '<p>✅ Vote envoyé. En attente des autres joueurs...</p>';
         };
@@ -239,27 +325,26 @@
     });
 
     socket.on('joueurElimine', ({ id, nom }) => {
-      console.log("joueurElimine:", nom, id);
       document.getElementById('voteAnimation').style.display = 'none';
       document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
       voteEnCours = false;
-      if (btnVote) btnVote.disabled = true;
+      btnVote.disabled = true;
     });
 
     socket.on('finPartie', ({ message }) => {
-      console.log("finPartie:", message);
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('motContainer').style.display = 'block';
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
-      if (btnVote) btnVote.style.display = 'none';
+      btnVote.style.display = 'none';
+      btnVote.disabled = true;
     });
 
     socket.on('autoriserVote', () => {
-      console.log("autoriserVote reçu");
-      if (estCreateur && btnVote) {
+      if (estCreateur) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
+        voteEnCours = false;
       }
     });
 
@@ -267,11 +352,8 @@
       console.error("Erreur serveur:", msg);
       alert(msg);
     });
-
-    if (roomIdParam) {
-      salleId = roomIdParam;
-      console.log("Arrivé via lien room:", salleId);
-    }
   </script>
 </body>
 </html>
+
+  
