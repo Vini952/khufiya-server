@@ -79,7 +79,7 @@
     // éléments UI (initialisés dans initUI)
     let btnVote, createRoomBtn, joinRoomBtn, copierLienBtn, replayBtn;
 
-    // handlers extraits pour pouvoir réutiliser / attacher proprement
+    // handlers extraits
     function onCreateRoom() {
       const nom = document.getElementById('nomCreateur').value.trim();
       const count = parseInt(document.getElementById('playerCount').value);
@@ -163,13 +163,11 @@
     socket.on('connect', () => {
       monId = socket.id;
       console.log("Socket connecté:", monId);
-      // si on arrive via lien
       if (roomIdParam) {
         salleId = roomIdParam;
         document.getElementById('formCreateur').style.display = 'none';
         document.getElementById('formInvite').style.display = 'block';
       }
-      // ré-init UI si nécessaire
       if (!btnVote) initUI();
     });
 
@@ -210,8 +208,6 @@
       });
     });
 
-    btnVote && console.log("Initial btnVote state:", !!btnVote);
-
     socket.on('voteCommence', (joueurs) => {
       console.log("voteCommence reçu", joueurs);
       voteEnCours = true;
@@ -237,7 +233,7 @@
       document.getElementById('voteAnimation').style.display = 'none';
       document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
       voteEnCours = false;
-      btnVote.disabled = true;
+      if (btnVote) btnVote.disabled = true;
     });
 
     socket.on('finPartie', ({ message }) => {
@@ -246,12 +242,12 @@
       document.getElementById('motContainer').style.display = 'block';
       document.getElementById('motMessage').innerText = message;
       document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
-      btnVote.style.display = 'none';
+      if (btnVote) btnVote.style.display = 'none';
     });
 
     socket.on('autoriserVote', () => {
       console.log("autoriserVote reçu");
-      if (estCreateur) {
+      if (estCreateur && btnVote) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
       }
