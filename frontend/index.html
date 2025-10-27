@@ -352,6 +352,16 @@
       }
     });
 
+      socket.on('joueurCommence', ({ nom, id }) => {
+  const message = (id === monId)
+    ? "🎯 C’est toi qui commence !"
+    : `🎯 ${nom} commence la partie.`;
+
+  const zone = document.getElementById('motDetail');
+  zone.innerText += "\n" + message;
+});
+
+
     socket.on('erreur', (msg) => {
       console.error("Erreur serveur:", msg);
       alert(msg);
