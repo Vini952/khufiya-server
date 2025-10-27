@@ -204,7 +204,7 @@
   <div id="zoneControle">
     <button id="btnVote" disabled>Lancer un vote</button>
   </div>
-  <script>
+    <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomIdParam = params.get("room");
@@ -256,11 +256,11 @@
     replayBtn.addEventListener('click', () => location.reload());
 
     btnVote.addEventListener('click', () => {
-      console.log("CLIENT: Envoi demarrerVote avec salleId =", salleId);
+      console.log("CLIENT: Envoi demarrerVote avec roomId =", salleId);
       if (!salleId || voteEnCours) return;
       voteEnCours = true;
       btnVote.disabled = true;
-      socket.emit('demarrerVote', salleId);
+      socket.emit('demarrerVote', { roomId: salleId }); // ✅ correction ici
       document.getElementById('voteAnimation').style.display = 'block';
       document.getElementById('zoneVote').innerHTML = '';
     });
