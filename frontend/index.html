@@ -5,57 +5,85 @@
   <title>Khufiya - dhoondo mujhe</title>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
+    :root {
+      --primary: #00ffcc;
+      --bg-dark: #0f0f0f;
+      --bg-light: #111;
+      --text-light: #ccc;
+      --shadow: 0 0 20px var(--primary);
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(circle at top, #0f0f0f, #000);
-      color: #00ffcc;
-      text-align: center;
-      padding: 40px;
+      background: linear-gradient(to bottom, var(--bg-dark), #000);
+      color: var(--primary);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     h1 {
       font-size: 48px;
-      margin-bottom: 20px;
-      color: #00ffcc;
-      text-shadow: 0 0 20px #00ffcc;
+      margin-bottom: 30px;
+      text-shadow: var(--shadow);
+    }
+
+    section {
+      background-color: var(--bg-light);
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow);
+    }
+
+    section h2 {
+      margin-top: 0;
+      font-size: 24px;
+      text-align: center;
     }
 
     input, button {
-      padding: 12px 16px;
-      margin: 10px;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
       font-size: 16px;
       border-radius: 8px;
-      border: 1px solid #00ffcc;
-      background-color: #111;
-      color: #00ffcc;
+      border: 1px solid var(--primary);
+      background-color: var(--bg-light);
+      color: var(--primary);
       box-shadow: 0 0 10px #00ffcc44;
     }
 
     button:hover {
       background-color: #222;
-      transform: scale(1.05);
+      transform: scale(1.03);
       box-shadow: 0 0 15px #00ffcc88;
       cursor: pointer;
     }
 
     .joueur-card {
-      background-color: #111;
-      border: 1px solid #00ffcc;
+      background-color: #1a1a1a;
+      border: 1px solid var(--primary);
       border-radius: 8px;
-      padding: 10px 14px;
-      margin: 8px auto;
+      padding: 10px;
+      margin: 6px auto;
       width: fit-content;
-      box-shadow: 0 0 12px #00ffcc88;
       font-weight: bold;
+      box-shadow: 0 0 10px #00ffcc55;
     }
 
     .vote-button {
-      margin: 6px;
       background-color: #222;
-      color: #00ffcc;
-      border: 1px solid #00ffcc;
+      color: var(--primary);
+      border: 1px solid var(--primary);
       border-radius: 6px;
-      padding: 8px 12px;
+      padding: 10px;
+      margin: 6px;
       cursor: pointer;
     }
 
@@ -66,37 +94,32 @@
 
     #motContainer {
       background-color: #111;
-      border: 2px solid #00ffcc;
+      border: 2px solid var(--primary);
       border-radius: 12px;
       padding: 20px;
       margin-top: 30px;
-      box-shadow: 0 0 20px #00ffcc88;
+      box-shadow: var(--shadow);
       display: none;
+      text-align: center;
     }
 
     #motMessage {
       font-size: 28px;
       margin-bottom: 10px;
-      color: #00ffcc;
-      text-shadow: 0 0 10px #00ffcc;
+      text-shadow: 0 0 10px var(--primary);
     }
 
     #motDetail {
       font-size: 18px;
-      color: #ccc;
+      color: var(--text-light);
       white-space: pre-line;
-    }
-
-    #zoneVote {
-      margin-top: 20px;
-      padding: 10px;
     }
 
     #btnVote {
       display: none;
       background-color: #111;
-      border: 1px solid #00ffcc;
-      color: #00ffcc;
+      border: 1px solid var(--primary);
+      color: var(--primary);
       padding: 12px 18px;
       font-size: 18px;
       border-radius: 8px;
@@ -107,46 +130,63 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    @media screen and (max-width: 600px) {
+      body {
+        padding: 20px 10px;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+
+      section {
+        padding: 15px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>🕵️‍♂️ Khufiya</h1>
 
-  <div id="formCreateur">
-    <p>Ton prénom :</p>
-    <input type="text" id="nomCreateur" placeholder="Ex: Tailor">
-    <p>Combien de joueurs ?</p>
-    <input type="number" id="playerCount" min="2" max="20" placeholder="Ex: 3">
+  <section id="formCreateur">
+    <h2>Créer une salle</h2>
+    <input type="text" id="nomCreateur" placeholder="Ton prénom">
+    <input type="number" id="playerCount" min="2" max="20" placeholder="Nombre de joueurs">
     <button id="createRoomBtn">Créer la salle</button>
-  </div>
+  </section>
 
-  <div id="roomLinkContainer" style="display:none;">
-    <p>Lien d'invitation :</p>
-    <input type="text" id="roomLink" readonly style="width:80%; font-size:16px;">
+  <section id="roomLinkContainer" style="display:none;">
+    <h2>Lien d'invitation</h2>
+    <input type="text" id="roomLink" readonly>
     <button id="copierLienBtn">Copier</button>
-  </div>
+  </section>
 
-  <div id="formInvite" style="display:none;">
-    <p>Entre ton prénom pour rejoindre la partie :</p>
+  <section id="formInvite" style="display:none;">
+    <h2>Rejoindre une salle</h2>
     <input type="text" id="prenomInvite" placeholder="Ton prénom">
     <button id="joinRoomBtn">Rejoindre</button>
-  </div>
+  </section>
 
-  <div id="waitingScreen" style="display:none;">
+  <section id="waitingScreen" style="display:none;">
     <h2>En attente des joueurs...</h2>
     <div id="zoneVote"></div>
-  </div>
+  </section>
 
-  <div id="listeJoueurs" style="margin-top:20px;">
-    <h3>Joueurs connectés :</h3>
+  <section id="listeJoueurs">
+    <h2>Joueurs connectés</h2>
     <div id="joueursConnectes"></div>
-  </div>
+  </section>
 
-  <div id="motContainer">
+  <section id="motContainer">
     <h2 id="motMessage"></h2>
     <p id="motDetail"></p>
     <button id="replayBtn">🔁 Rejouer</button>
-  </div>
+  </section>
 
   <button id="btnVote">Lancer un vote</button>
   <script>
@@ -268,19 +308,18 @@
       });
     });
 
-  socket.on('joueurElimine', ({ nom }) => {
-  document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
-  voteEnCours = false;
+    socket.on('joueurElimine', ({ nom }) => {
+      document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+      voteEnCours = false;
 
-  // 🔊 Synthèse vocale
-  const phrase = `${nom} a été éliminé`;
-  const utterance = new SpeechSynthesisUtterance(phrase);
-  utterance.lang = 'fr-FR'; // Tu peux changer en 'en-US' ou 'hi-IN' si tu veux
-  utterance.pitch = 1;
-  utterance.rate = 1;
-  speechSynthesis.speak(utterance);
-});
-
+      // 🔊 Synthèse vocale
+      const phrase = `${nom} a été éliminé`;
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      utterance.lang = 'fr-FR';
+      utterance.pitch = 1;
+      utterance.rate = 1;
+      speechSynthesis.speak(utterance);
+    });
 
     socket.on('finPartie', ({ message }) => {
       document.getElementById('motMessage').innerText = message;
