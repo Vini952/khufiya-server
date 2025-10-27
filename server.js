@@ -85,12 +85,23 @@ io.on('connection', (socket) => {
         console.log(`📨 ${joueur.nom} reçoit le mot : ${mot.hindi} (${mot.english})`);
       }
     });
+
+    // 🔀 Choisir un joueur actif pour commencer
+    const joueursActifs = salle.joueurs.filter(j => !j.elimine);
+    const indexPremier = Math.floor(Math.random() * joueursActifs.length);
+    const premier = joueursActifs[indexPremier];
+
+    // 📢 Annonce à tous les joueurs
+    io.to(roomId).emit('joueurCommence', {
+      nom: premier.nom,
+      id: premier.id
+    });
+
+    console.log(`🎯 ${premier.nom} commence la partie.`);
   }
 
-  // ✅ Correction ici : on reçoit un objet { roomId }
   socket.on('demarrerVote', ({ roomId }) => {
-   console.log("SERVEUR: reçu demarrerVote avec roomId =", roomId);
-   console.log("SERVEUR: rooms disponibles =", Object.keys(rooms));
+    console.log("📬 SERVEUR: Vote reçu du client :", socket.id, "pour salle :", roomId);
 
     if (!roomId || !rooms[roomId]) {
       console.log("⛔ SERVEUR: Salle introuvable :", roomId);
