@@ -268,10 +268,19 @@
       });
     });
 
-    socket.on('joueurElimine', ({ nom }) => {
-      document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
-      voteEnCours = false;
-    });
+  socket.on('joueurElimine', ({ nom }) => {
+  document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
+  voteEnCours = false;
+
+  // 🔊 Synthèse vocale
+  const phrase = `${nom} a été éliminé`;
+  const utterance = new SpeechSynthesisUtterance(phrase);
+  utterance.lang = 'fr-FR'; // Tu peux changer en 'en-US' ou 'hi-IN' si tu veux
+  utterance.pitch = 1;
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
+});
+
 
     socket.on('finPartie', ({ message }) => {
       document.getElementById('motMessage').innerText = message;
