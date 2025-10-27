@@ -87,29 +87,29 @@ io.on('connection', (socket) => {
     });
   }
 
-socket.on('demarrerVote', (roomId) => {
-  console.log("📬 SERVEUR: Vote reçu du client :", socket.id, "pour salle :", roomId);
+  // ✅ Correction ici : on reçoit un objet { roomId }
+  socket.on('demarrerVote', ({ roomId }) => {
+    console.log("📬 SERVEUR: Vote reçu du client :", socket.id, "pour salle :", roomId);
 
-  if (!roomId || !rooms[roomId]) {
-    console.log("⛔ SERVEUR: Salle introuvable :", roomId);
-    socket.emit('erreur', "Salle introuvable.");
-    return;
-  }
+    if (!roomId || !rooms[roomId]) {
+      console.log("⛔ SERVEUR: Salle introuvable :", roomId);
+      socket.emit('erreur', "Salle introuvable.");
+      return;
+    }
 
-  const salle = rooms[roomId];
+    const salle = rooms[roomId];
 
-  if (socket.id !== salle.createurId) {
-    console.log("⛔ SERVEUR: Seul le créateur peut lancer le vote. Créateur attendu :", salle.createurId);
-    socket.emit('erreur', "Seul le créateur peut lancer le vote.");
-    return;
-  }
+    if (socket.id !== salle.createurId) {
+      console.log("⛔ SERVEUR: Seul le créateur peut lancer le vote. Créateur attendu :", salle.createurId);
+      socket.emit('erreur', "Seul le créateur peut lancer le vote.");
+      return;
+    }
 
-  salle.votes = {};
-  const joueursActifs = getJoueursActifs(roomId);
-  console.log("📤 SERVEUR: Envoi de voteCommence à :", joueursActifs.map(j => j.nom));
-  io.to(roomId).emit('voteCommence', joueursActifs);
-});
-
+    salle.votes = {};
+    const joueursActifs = getJoueursActifs(roomId);
+    console.log("📤 SERVEUR: Envoi de voteCommence à :", joueursActifs.map(j => j.nom));
+    io.to(roomId).emit('voteCommence', joueursActifs);
+  });
 
   socket.on('voteContre', ({ roomId, cibleId }) => {
     const salle = rooms[roomId];
