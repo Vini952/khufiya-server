@@ -89,7 +89,8 @@ io.on('connection', (socket) => {
 
   // ✅ Correction ici : on reçoit un objet { roomId }
   socket.on('demarrerVote', ({ roomId }) => {
-    console.log("📬 SERVEUR: Vote reçu du client :", socket.id, "pour salle :", roomId);
+   console.log("SERVEUR: reçu demarrerVote avec roomId =", roomId);
+   console.log("SERVEUR: rooms disponibles =", Object.keys(rooms));
 
     if (!roomId || !rooms[roomId]) {
       console.log("⛔ SERVEUR: Salle introuvable :", roomId);
