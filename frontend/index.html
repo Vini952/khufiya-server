@@ -2,74 +2,153 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Vote - Khufiya</title>
+  <title>Khufiya - dhoondo mujhe</title>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #111;
-      color: #0ff;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top, #0f0f0f, #000);
+      color: #00ffcc;
       text-align: center;
       padding: 40px;
     }
 
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #00ffcc;
+      text-shadow: 0 0 20px #00ffcc;
+    }
+
     input, button {
-      padding: 10px;
+      padding: 12px 16px;
       margin: 10px;
       font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #0ff;
+      border-radius: 8px;
+      border: 1px solid #00ffcc;
+      background-color: #111;
+      color: #00ffcc;
+      box-shadow: 0 0 10px #00ffcc44;
+    }
+
+    button:hover {
       background-color: #222;
-      color: #0ff;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #00ffcc88;
+      cursor: pointer;
     }
 
     .joueur-card {
-      margin: 5px;
-      padding: 8px;
-      border: 1px solid #0ff;
-      border-radius: 6px;
-      display: inline-block;
+      background-color: #111;
+      border: 1px solid #00ffcc;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 8px auto;
+      width: fit-content;
+      box-shadow: 0 0 12px #00ffcc88;
+      font-weight: bold;
     }
 
     .vote-button {
       margin: 6px;
-      padding: 8px 12px;
-      border: 1px solid #0ff;
-      background-color: #333;
-      color: #0ff;
+      background-color: #222;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
       border-radius: 6px;
+      padding: 8px 12px;
       cursor: pointer;
     }
 
-    #btnVote {
+    .vote-button:hover {
+      background-color: #333;
+      box-shadow: 0 0 10px #00ffcc88;
+    }
+
+    #motContainer {
+      background-color: #111;
+      border: 2px solid #00ffcc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      box-shadow: 0 0 20px #00ffcc88;
       display: none;
+    }
+
+    #motMessage {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #00ffcc;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+
+    #motDetail {
+      font-size: 18px;
+      color: #ccc;
+      white-space: pre-line;
     }
 
     #zoneVote {
       margin-top: 20px;
+      padding: 10px;
+    }
+
+    #btnVote {
+      display: none;
+      background-color: #111;
+      border: 1px solid #00ffcc;
+      color: #00ffcc;
+      padding: 12px 18px;
+      font-size: 18px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00ffcc88;
+    }
+
+    #btnVote[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
-  <h1>🗳️ Test de Vote</h1>
+  <h1>🕵️‍♂️ Khufiya</h1>
 
   <div id="formCreateur">
-    <input type="text" id="nomCreateur" placeholder="Ton prénom">
-    <input type="number" id="playerCount" min="2" max="10" placeholder="Nb joueurs">
+    <p>Ton prénom :</p>
+    <input type="text" id="nomCreateur" placeholder="Ex: Tailor">
+    <p>Combien de joueurs ?</p>
+    <input type="number" id="playerCount" min="2" max="20" placeholder="Ex: 3">
     <button id="createRoomBtn">Créer la salle</button>
   </div>
 
+  <div id="roomLinkContainer" style="display:none;">
+    <p>Lien d'invitation :</p>
+    <input type="text" id="roomLink" readonly style="width:80%; font-size:16px;">
+    <button id="copierLienBtn">Copier</button>
+  </div>
+
   <div id="formInvite" style="display:none;">
+    <p>Entre ton prénom pour rejoindre la partie :</p>
     <input type="text" id="prenomInvite" placeholder="Ton prénom">
     <button id="joinRoomBtn">Rejoindre</button>
   </div>
 
-  <div id="zoneControle" style="margin-top:20px;">
-    <button id="btnVote">Lancer un vote</button>
+  <div id="waitingScreen" style="display:none;">
+    <h2>En attente des joueurs...</h2>
+    <div id="zoneVote"></div>
   </div>
 
-  <div id="joueursConnectes"></div>
-  <div id="zoneVote"></div>
+  <div id="listeJoueurs" style="margin-top:20px;">
+    <h3>Joueurs connectés :</h3>
+    <div id="joueursConnectes"></div>
+  </div>
+
+  <div id="motContainer">
+    <h2 id="motMessage"></h2>
+    <p id="motDetail"></p>
+    <button id="replayBtn">🔁 Rejouer</button>
+  </div>
+
+  <button id="btnVote">Lancer un vote</button>
   <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
@@ -83,6 +162,8 @@
     const btnVote = document.getElementById('btnVote');
     const createRoomBtn = document.getElementById('createRoomBtn');
     const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const copierLienBtn = document.getElementById('copierLienBtn');
+    const replayBtn = document.getElementById('replayBtn');
 
     createRoomBtn.addEventListener('click', () => {
       const nom = document.getElementById('nomCreateur').value.trim();
@@ -91,11 +172,13 @@
 
       monNom = nom;
       estCreateur = true;
-      salleId = "testvote-" + Math.random().toString(36).substring(2, 6);
+      salleId = "khufiya-" + Math.random().toString(36).substring(2, 6);
       socket.emit('creerSalle', { roomId: salleId, max: count, nomCreateur: nom });
 
+      document.getElementById('roomLink').value = window.location.origin + "/?room=" + salleId;
+      document.getElementById('roomLinkContainer').style.display = 'block';
       document.getElementById('formCreateur').style.display = 'none';
-      document.getElementById('btnVote').style.display = 'inline-block';
+      document.getElementById('waitingScreen').style.display = 'block';
     });
 
     joinRoomBtn.addEventListener('click', () => {
@@ -105,7 +188,17 @@
       salleId = roomIdParam;
       socket.emit('rejoindreSalle', { roomId: salleId, nom });
       document.getElementById('formInvite').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'block';
     });
+
+    copierLienBtn.addEventListener('click', () => {
+      const input = document.getElementById('roomLink');
+      input.select();
+      document.execCommand('copy');
+      alert("Lien copié !");
+    });
+
+    replayBtn.addEventListener('click', () => location.reload());
 
     btnVote.addEventListener('click', () => {
       if (!salleId || voteEnCours) return;
@@ -135,6 +228,29 @@
       });
     });
 
+    socket.on('motDistribue', (mot) => {
+      document.getElementById('motContainer').style.display = 'block';
+      document.getElementById('motMessage').innerText = "🎉 Mot à deviner :";
+      document.getElementById('motDetail').innerText = mot.hindi + " (" + mot.english + ")";
+      if (estCreateur) {
+        btnVote.style.display = 'inline-block';
+        btnVote.disabled = false;
+      }
+    });
+
+    socket.on('tuEsLeMystere', ({ message }) => {
+      document.getElementById('motContainer').style.display = 'block';
+      document.getElementById('motMessage').innerText = message;
+      document.getElementById('motDetail').innerText = "Observe les autres et devine le mot.";
+    });
+
+    socket.on('joueurCommence', ({ nom, id }) => {
+      const message = (id === monId)
+        ? "🎯 C’est toi qui commence !"
+        : `🎯 ${nom} commence la partie.`;
+      document.getElementById('motDetail').innerText += "\n" + message;
+    });
+
     socket.on('voteCommence', (joueurs) => {
       const zone = document.getElementById('zoneVote');
       zone.innerHTML = '<h3>Votez contre un joueur :</h3>';
@@ -155,6 +271,13 @@
     socket.on('joueurElimine', ({ nom }) => {
       document.getElementById('zoneVote').innerHTML = `<p>❌ ${nom} a été éliminé.</p>`;
       voteEnCours = false;
+    });
+
+    socket.on('finPartie', ({ message }) => {
+      document.getElementById('motMessage').innerText = message;
+      document.getElementById('motDetail').innerText = "Bravo ! Vous avez trouvé le Khufiya.";
+      btnVote.style.display = 'none';
+      btnVote.disabled = true;
     });
 
     socket.on('autoriserVote', () => {
