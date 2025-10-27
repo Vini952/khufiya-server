@@ -129,6 +129,7 @@
     #motDetail {
       font-size: 18px;
       color: #ccc;
+      white-space: pre-line;
     }
 
     #zoneVote {
@@ -189,7 +190,6 @@
     <div id="zoneVote"></div>
   </div>
 
-  <!-- ✅ Bloc déplacé ici pour rester visible -->
   <div id="listeJoueurs" style="margin-top:20px;">
     <h3>Joueurs connectés :</h3>
     <div id="joueursConnectes"></div>
@@ -204,7 +204,7 @@
   <div id="zoneControle">
     <button id="btnVote" disabled>Lancer un vote</button>
   </div>
-    <script>
+  <script>
     const socket = io();
     const params = new URLSearchParams(window.location.search);
     const roomIdParam = params.get("room");
@@ -260,14 +260,13 @@
       if (!salleId || voteEnCours) return;
       voteEnCours = true;
       btnVote.disabled = true;
-      socket.emit('demarrerVote', { roomId: salleId }); // ✅ correction ici
+      socket.emit('demarrerVote', { roomId: salleId });
       document.getElementById('voteAnimation').style.display = 'block';
       document.getElementById('zoneVote').innerHTML = '';
     });
 
     socket.on('connect', () => {
       monId = socket.id;
-      console.log("Socket connecté:", monId);
       if (roomIdParam) {
         salleId = roomIdParam;
         document.getElementById('formCreateur').style.display = 'none';
@@ -286,7 +285,6 @@
       if (estCreateur) {
         btnVote.style.display = 'inline-block';
         btnVote.disabled = false;
-        console.log("Bouton vote affiché et activé pour le créateur");
       }
     }
 
@@ -296,6 +294,13 @@
 
     socket.on('tuEsLeMystere', (data) => {
       afficherDebutPartie(data.message, "Observe les autres et devine le mot.");
+    });
+
+    socket.on('joueurCommence', ({ nom, id }) => {
+      const message = (id === monId)
+        ? "🎯 C’est toi qui commence !"
+        : `🎯 ${nom} commence la partie.`;
+      document.getElementById('motDetail').innerText += "\n" + message;
     });
 
     socket.on('miseAJourJoueurs', (liste) => {
@@ -351,16 +356,6 @@
         voteEnCours = false;
       }
     });
-
-      socket.on('joueurCommence', ({ nom, id }) => {
-  const message = (id === monId)
-    ? "🎯 C’est toi qui commence !"
-    : `🎯 ${nom} commence la partie.`;
-
-  const zone = document.getElementById('motDetail');
-  zone.innerText += "\n" + message;
-});
-
 
     socket.on('erreur', (msg) => {
       console.error("Erreur serveur:", msg);
