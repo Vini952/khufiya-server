@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const motsHindi = require('./motsHindi');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -22,11 +23,16 @@ io.on('connection', (socket) => {
     rooms[roomId] = {
       max,
       joueurs: [{ id: socket.id, nom: nomCreateur, elimine: false }],
+      mot: null,
+      mystere: null,
       votes: {},
       createurId: socket.id
     };
     socket.join(roomId);
     io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
+    if (rooms[roomId].joueurs.length === max) {
+      demarrerPartie(roomId);
+    }
   });
 
   socket.on('rejoindreSalle', ({ roomId, nom }) => {
@@ -35,7 +41,39 @@ io.on('connection', (socket) => {
     salle.joueurs.push({ id: socket.id, nom, elimine: false });
     socket.join(roomId);
     io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
+    if (salle.joueurs.length === salle.max) {
+      demarrerPartie(roomId);
+    }
   });
+
+  function demarrerPartie(roomId) {
+    const salle = rooms[roomId];
+    const mot = motsHindi[Math.floor(Math.random() * motsHindi.length)];
+    const indexMystere = Math.floor(Math.random() * salle.joueurs.length);
+    const mystereId = salle.joueurs[indexMystere].id;
+
+    salle.mot = mot;
+    salle.mystere = mystereId;
+    salle.votes = {};
+
+    salle.joueurs.forEach(joueur => {
+      if (joueur.id === mystereId) {
+        io.to(joueur.id).emit('tuEsLeMystere', {
+          message: "Tu es le Khufiya ! Ne révèle rien."
+        });
+      } else {
+        io.to(joueur.id).emit('motDistribue', mot);
+      }
+    });
+
+    const joueursActifs = salle.joueurs.filter(j => !j.elimine);
+    const indexPremier = Math.floor(Math.random() * joueursActifs.length);
+    const premier = joueursActifs[indexPremier];
+    io.to(roomId).emit('joueurCommence', {
+      nom: premier.nom,
+      id: premier.id
+    });
+  }
 
   socket.on('demarrerVote', ({ roomId }) => {
     const salle = rooms[roomId];
@@ -65,7 +103,14 @@ io.on('connection', (socket) => {
         joueur.elimine = true;
         salle.votes = {};
         io.to(roomId).emit('joueurElimine', { id: elimineId, nom: joueur.nom });
-        io.to(salle.createurId).emit('autoriserVote');
+        if (elimineId === salle.mystere) {
+          io.to(roomId).emit('finPartie', {
+            message: `🎯 Le Khufiya (${joueur.nom}) a été éliminé !`
+          });
+        } else {
+          io.to(roomId).emit('miseAJourJoueurs', getJoueursActifs(roomId));
+          io.to(salle.createurId).emit('autoriserVote');
+        }
       }
     }
   });
@@ -85,5 +130,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Serveur de test lancé sur le port ${PORT}`);
+  console.log(`🚀 Serveur Khufiya lancé sur le port ${PORT}`);
 });
